@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNSILENCED — Stop Cyberbullying</title>
+  <meta name="description" content="Every young person deserves to exist online without fear. Report cyberbullying, find help, and join the movement."/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,700;1,400&family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/features.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+</head>
+<body>
+
+<!-- EMAIL VERIFY BANNER -->
+<div id="verify-banner">
+  <span>📧 Please verify your email to unlock all features.</span>
+  <div style="display:flex;gap:0.75rem;align-items:center">
+    <button class="verify-resend-btn" onclick="resendVerification()">Resend Email</button>
+    <button onclick="hideVerifyBanner()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;cursor:pointer">x</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-modal">
+    <div class="auth-success-screen" id="auth-success">
+      <span class="auth-success-icon">🎉</span>
+      <div class="auth-success-title">Welcome, <span id="auth-success-name"></span>!</div>
+      <p class="auth-success-sub">Your account is created. Check your inbox for a verification email.</p>
+      <button class="auth-submit" style="max-width:260px;margin:0 auto" onclick="closeAuthModal()"><span class="btn-label">Start Exploring</span></button>
+    </div>
+    <div id="auth-login-panel">
+      <div class="auth-header"><span class="auth-logo">UNSILENCED</span><button class="auth-close" onclick="closeAuthModal()">x</button></div>
+      <div class="auth-title-block"><h2 class="auth-title">Welcome Back</h2><p class="auth-subtitle">Sign in to track your reports, safety plan, and quiz history.</p></div>
+      <div class="auth-body">
+        <div class="auth-alert" id="login-alert"></div>
+        <div class="auth-form-group"><label class="auth-label" for="login-email">Email Address</label><div class="auth-input-wrap"><input class="auth-input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email"/></div></div>
+        <div class="auth-form-group"><label class="auth-label" for="login-password">Password</label><div class="auth-input-wrap"><input class="auth-input" id="login-password" type="password" placeholder="Your password" autocomplete="current-password" style="padding-right:3.5rem"/><button class="auth-input-toggle" onclick="togglePasswordVisibility('login-password',this)" type="button">👁</button></div><button class="auth-forgot" onclick="showForgotView()" type="button">Forgot password?</button></div>
+        <button class="auth-submit" id="login-submit-btn" onclick="submitLogin()"><span class="auth-spinner"></span><span class="btn-label">Sign In</span></button>
+        <div class="auth-switch">Don't have an account? <button class="auth-switch-btn" onclick="showSignupView()">Create one free</button></div>
+      </div>
+    </div>
+    <div id="auth-signup-panel" style="display:none">
+      <div class="auth-header"><span class="auth-logo">UNSILENCED</span><button class="auth-close" onclick="closeAuthModal()">x</button></div>
+      <div class="auth-title-block"><h2 class="auth-title">Join the Movement</h2><p class="auth-subtitle">Free account — track reports, save your safety plan, access everything.</p></div>
+      <div class="auth-steps">
+        <div class="auth-step-item"><div class="auth-step-dot active">1</div><div class="auth-step-line"></div></div>
+        <div class="auth-step-item"><div class="auth-step-dot">2</div></div>
+      </div>
+      <div class="auth-step-labels"><div class="auth-step-label-item active">Account</div><div class="auth-step-label-item">Profile</div></div>
+      <div class="auth-body">
+        <div id="signup-step-1">
+          <div class="auth-alert" id="signup-alert"></div>
+          <div class="auth-form-group"><label class="auth-label" for="signup-email">Email Address</label><div class="auth-input-wrap"><input class="auth-input" id="signup-email" type="email" placeholder="you@example.com"/></div></div>
+          <div class="auth-form-group"><label class="auth-label" for="signup-password">Create Password</label><div class="auth-input-wrap"><input class="auth-input" id="signup-password" type="password" placeholder="Minimum 8 characters" style="padding-right:3.5rem" oninput="updatePasswordStrength(this.value)"/><button class="auth-input-toggle" onclick="togglePasswordVisibility('signup-password',this)" type="button">👁</button></div><div class="password-strength" id="strength-wrap"><div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div><span class="strength-label" id="strength-label"></span></div></div>
+          <div class="auth-form-group"><label class="auth-label" for="signup-confirm">Confirm Password</label><div class="auth-input-wrap"><input class="auth-input" id="signup-confirm" type="password" placeholder="Repeat your password" style="padding-right:3.5rem"/><button class="auth-input-toggle" onclick="togglePasswordVisibility('signup-confirm',this)" type="button">👁</button></div></div>
+          <button class="auth-submit" onclick="signupNextStep()"><span class="btn-label">Next: Your Profile</span></button>
+          <div class="auth-switch">Already have an account? <button class="auth-switch-btn" onclick="showLoginView()">Sign in instead</button></div>
+        </div>
+        <div id="signup-step-2" style="display:none">
+          <div class="auth-alert" id="signup-alert-2"></div>
+          <div class="auth-form-group"><label class="auth-label" for="signup-name">Full Name</label><div class="auth-input-wrap"><input class="auth-input" id="signup-name" type="text" placeholder="Your name" autocomplete="name"/></div></div>
+          <div class="auth-form-group"><label class="auth-label">I am a...</label>
+            <div class="role-cards">
+              <div class="role-card" onclick="selectRole('student',this)"><span class="role-card-icon">🎒</span><span class="role-card-label">Student</span></div>
+              <div class="role-card" onclick="selectRole('parent',this)"><span class="role-card-icon">👨‍👩‍👧</span><span class="role-card-label">Parent</span></div>
+              <div class="role-card" onclick="selectRole('teacher',this)"><span class="role-card-icon">🏫</span><span class="role-card-label">Teacher</span></div>
+              <div class="role-card" onclick="selectRole('other',this)"><span class="role-card-icon">🙋</span><span class="role-card-label">Other</span></div>
+            </div>
+          </div>
+          <div class="auth-form-row">
+            <div class="auth-form-group" style="margin-bottom:0"><label class="auth-label">Age Group</label>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.4rem">
+                <div class="age-option role-card" onclick="selectAge('under18',this)" style="text-align:left;padding:0.6rem 1rem;display:flex;align-items:center;gap:0.6rem"><span>🌱</span><span class="role-card-label">Under 18</span></div>
+                <div class="age-option role-card" onclick="selectAge('18-25',this)" style="text-align:left;padding:0.6rem 1rem;display:flex;align-items:center;gap:0.6rem"><span>🌿</span><span class="role-card-label">18 to 25</span></div>
+                <div class="age-option role-card" onclick="selectAge('25+',this)" style="text-align:left;padding:0.6rem 1rem;display:flex;align-items:center;gap:0.6rem"><span>🌳</span><span class="role-card-label">25 plus</span></div>
+              </div>
+            </div>
+            <div class="auth-form-group" style="margin-bottom:0"><label class="auth-label" for="signup-city">City / State <span style="font-weight:400;font-size:0.7rem;text-transform:none;color:var(--muted)">(optional)</span></label><div class="auth-input-wrap"><input class="auth-input" id="signup-city" type="text" placeholder="e.g. Mumbai, MH"/></div></div>
+          </div>
+          <div style="margin-top:1.2rem"><div class="auth-terms"><input type="checkbox" id="signup-terms"/><label class="auth-terms-label" for="signup-terms">I agree to the <a href="#faq">Terms of Use</a> and <a href="#faq">Privacy Policy</a>.</label></div></div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+            <button onclick="signupPrevStep()" style="flex:0 0 auto;padding:1rem 1.4rem;background:none;border:2px solid var(--border);border-radius:10px;font-weight:700;color:var(--muted);cursor:pointer">Back</button>
+            <button class="auth-submit" id="signup-submit-btn" style="flex:1" onclick="submitSignup()"><span class="auth-spinner"></span><span class="btn-label">Create My Account</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="auth-forgot-panel" style="display:none">
+      <div class="auth-header"><span class="auth-logo">UNSILENCED</span><button class="auth-close" onclick="closeAuthModal()">x</button></div>
+      <div class="auth-title-block"><h2 class="auth-title">Reset Password</h2><p class="auth-subtitle">Enter your email and we'll send a reset link.</p></div>
+      <div class="auth-body">
+        <div class="auth-alert" id="forgot-alert"></div>
+        <div class="auth-form-group"><label class="auth-label" for="forgot-email">Email Address</label><div class="auth-input-wrap"><input class="auth-input" id="forgot-email" type="email" placeholder="you@example.com"/></div></div>
+        <button class="auth-submit" id="forgot-submit-btn" onclick="submitForgotPassword()"><span class="auth-spinner"></span><span class="btn-label">Send Reset Link</span></button>
+        <div class="auth-switch"><button class="auth-switch-btn" onclick="showLoginView()">Back to Sign In</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOS EMERGENCY BANNER -->
+<div id="sos-banner">
+  <div class="sos-text"><strong>🆘 Are you in immediate danger?</strong> Help is available right now.</div>
+  <div class="sos-actions">
+    <button class="sos-btn primary" onclick="openSOSModal()">Get Immediate Help</button>
+    <a href="tel:1930" class="sos-btn ghost">📞 Call 1930</a>
+    <button class="sos-close" onclick="hideSOSBanner()">×</button>
+  </div>
+</div>
+
+<!-- SOS MODAL -->
+<div class="modal-overlay" id="sos-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div><h2>🆘 Immediate Help</h2><p>You are not alone. Here's exactly what to do right now.</p></div>
+      <button class="modal-x" onclick="closeSOSModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="sos-steps">
+        <div class="sos-step urgent">
+          <div class="sos-step-icon">📞</div>
+          <div class="sos-step-text">
+            <h4>Call the Cyber Crime Helpline: 1930</h4>
+            <p>Available 24/7. Free call. They can help you document, report, and get immediate guidance. <a href="tel:1930">Tap to call now →</a></p>
+          </div>
+        </div>
+        <div class="sos-step urgent">
+          <div class="sos-step-icon">💬</div>
+          <div class="sos-step-text">
+            <h4>Talk to a Counsellor: 9152987821 (iCall)</h4>
+            <p>Free, confidential, trained counsellors ready to listen. If you're feeling overwhelmed, call or text them. <a href="tel:9152987821">Tap to call →</a></p>
+          </div>
+        </div>
+        <div class="sos-step safe">
+          <div class="sos-step-icon">🔒</div>
+          <div class="sos-step-text">
+            <h4>Block & Mute Immediately</h4>
+            <p>Block the person on every platform they're contacting you on. You do not have to keep reading their messages. Block first, evidence later.</p>
+          </div>
+        </div>
+        <div class="sos-step safe">
+          <div class="sos-step-icon">📸</div>
+          <div class="sos-step-text">
+            <h4>Screenshot Before You Delete</h4>
+            <p>Before blocking or deleting anything, take screenshots. These are your evidence. Use our <a href="#report">Evidence Upload</a> to store them securely.</p>
+          </div>
+        </div>
+        <div class="sos-step info">
+          <div class="sos-step-icon">🏠</div>
+          <div class="sos-step-text">
+            <h4>Tell Someone You Trust</h4>
+            <p>A parent, teacher, older sibling, or trusted adult. You shouldn't carry this alone. If you can't speak, show them this page.</p>
+          </div>
+        </div>
+        <div class="sos-step info">
+          <div class="sos-step-icon">🌐</div>
+          <div class="sos-step-text">
+            <h4>File an Official Report</h4>
+            <p>Go to <a href="https://cybercrime.gov.in" target="_blank">cybercrime.gov.in</a> or use our <a href="#report">Report Form</a> above. You can remain anonymous.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#hero" class="nav-logo">UN<span class="dot">■</span>SILENCED</a>
+  <ul class="nav-links">
+    <li><a href="#quiz">Quiz</a></li>
+    <li><a href="#bystander">Act Now</a></li>
+    <li><a href="#stories-wall">Stories</a></li>
+    <li><a href="#toolkit">Toolkit</a></li>
+    <li><a href="#safety-plan">Safety Plan</a></li>
+    <li><a href="#resources">Resources</a></li>
+    <li><a href="#report" class="nav-cta">Report Now</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:0.75rem">
+    <div id="nav-guest" style="display:flex;gap:0.5rem;align-items:center">
+      <button onclick="openAuthModal('login')" style="font-size:0.82rem;font-weight:700;color:var(--muted);background:none;border:none;cursor:pointer;padding:0.4rem 0.9rem;border-radius:6px;font-family:inherit">Sign In</button>
+      <button onclick="openAuthModal('signup')" style="font-size:0.82rem;font-weight:800;color:white;background:var(--red);border:none;cursor:pointer;padding:0.5rem 1rem;border-radius:6px;font-family:inherit">Sign Up</button>
+    </div>
+    <div id="nav-user" style="display:none;align-items:center;gap:0.6rem">
+      <a href="dashboard/index.html" id="nav-avatar" style="width:32px;height:32px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.82rem;color:white;text-decoration:none;">?</a>
+      <a href="dashboard/index.html" id="nav-username" style="font-size:0.82rem;font-weight:700;color:var(--ink);text-decoration:none;">Dashboard</a>
+    </div>
+    <div class="dark-toggle-wrap">
+      <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode"></button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-dots"></div>
+  <div class="hero-blob"></div>
+  <div class="hero-left">
+    <p class="hero-eyebrow">Safe Space Initiative</p>
+    <h1 class="hero-title">
+      YOUR <span class="red">VOICE</span><br>
+      <span class="outline">MATTERS</span>
+    </h1>
+    <p class="hero-tagline">
+      Every young person deserves to exist online <strong>without fear, harassment, or shame.</strong>
+      Cyberbullying ends when we speak up together.
+    </p>
+    <div class="hero-btns">
+      <a href="#report" class="btn-red">Report Cyberbullying →</a>
+      <a href="#resources" class="btn-ghost">Get Help Now</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-visual">
+      <div class="hero-visual-grid">
+        <div class="hero-stat-mini"><div class="num">59%</div><div class="lbl">Affected</div></div>
+        <div class="hero-stat-mini"><div class="num">7/10</div><div class="lbl">Silent</div></div>
+        <div class="hero-stat-mini"><div class="num">88%</div><div class="lbl">Social</div></div>
+        <div class="hero-stat-mini" style="grid-column:1/-1;"><div class="num" style="font-size:2.5rem">🛡️ Stand Up</div><div class="lbl">Report • Block • Tell Someone</div></div>
+        <div class="hero-stat-mini"><div class="num">70%</div><div class="lbl">Mental Impact</div></div>
+        <div class="hero-stat-mini"><div class="num">24/7</div><div class="lbl">Support</div></div>
+        <div class="hero-stat-mini"><div class="num">1930</div><div class="lbl">Helpline</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AWARENESS TICKER -->
+<div id="awareness-ticker">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="ticker-dot"></span>59% of Indian teens have experienced cyberbullying</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>7 in 10 victims never tell an adult</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Cyberbullying is a criminal offence under the IT Act 2000</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>National Cyber Crime Helpline: 1930 — free, 24/7</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>88% of cyberbullying happens on social media platforms</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Bystanders who speak up can stop bullying in over 50% of cases</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Evidence = Screenshots + timestamps + URLs — document everything</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>You are not alone — help is available right now</span>
+    <!-- duplicate for seamless loop -->
+    <span class="ticker-item"><span class="ticker-dot"></span>59% of Indian teens have experienced cyberbullying</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>7 in 10 victims never tell an adult</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Cyberbullying is a criminal offence under the IT Act 2000</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>National Cyber Crime Helpline: 1930 — free, 24/7</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>88% of cyberbullying happens on social media platforms</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Bystanders who speak up can stop bullying in over 50% of cases</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Evidence = Screenshots + timestamps + URLs — document everything</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>You are not alone — help is available right now</span>
+  </div>
+</div>
+
+<!-- REPORT SECTION -->
+<section id="report">
+  <div class="report-container">
+    <div class="report-header">
+      <h2>Report Cyberbullying</h2>
+      <p>Your report is anonymous and confidential. Evidence is stored securely. We are here to help.</p>
+    </div>
+
+    <div class="report-tabs">
+      <button class="report-tab active" onclick="switchTab('upload')">📸 Upload Evidence</button>
+      <button class="report-tab" onclick="switchTab('report')">📝 Report Incident</button>
+      <button class="report-tab" onclick="switchTab('anonymous')">💬 Anonymous Tip</button>
+    </div>
+
+    <!-- UPLOAD TAB -->
+    <div id="upload-tab" class="report-content active">
+      <form id="uploadForm">
+        <div class="form-group">
+          <label class="form-label">Upload Screenshots or Evidence</label>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📸</div>
+            <div class="upload-text">Click or drag files to upload</div>
+            <div class="upload-hint">Supports: PNG, JPG, GIF, PDF · Max 10MB per file · Stored securely via Cloudinary</div>
+          </div>
+          <input type="file" id="fileInput" class="file-input" multiple accept="image/*,.pdf" onchange="handleFileSelect(event)"/>
+          <div class="uploaded-files" id="uploadedFiles"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description <span style="font-weight:400;color:var(--muted)">(Optional)</span></label>
+          <textarea class="form-textarea" id="uploadDesc" placeholder="Provide any context about these screenshots…"></textarea>
+        </div>
+        <div class="form-checkbox">
+          <input type="checkbox" id="uploadAnon" checked/>
+          <label for="uploadAnon">Submit anonymously — your identity will <strong>not</strong> be shared or stored</label>
+        </div>
+        <button type="submit" class="submit-btn">
+          <span class="spinner"></span>
+          <span class="btn-text">Submit Evidence Securely →</span>
+        </button>
+      </form>
+      <div class="error-message" id="uploadError">Something went wrong. Please try again.</div>
+      <div class="success-message" id="uploadSuccess">
+        ✓ Evidence submitted and stored securely.<br>
+        <span style="font-size:0.9rem;opacity:0.8">Reference ID: <strong id="uploadRefId"></strong> — save this to track your report.</span>
+      </div>
+    </div>
+
+    <!-- REPORT TAB -->
+    <div id="report-tab" class="report-content">
+      <form id="reportForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Type of Incident</label>
+            <select class="form-select" id="incidentType" required>
+              <option value="">Select type…</option>
+              <option value="harassment">Harassment / Threats</option>
+              <option value="impersonation">Impersonation</option>
+              <option value="sharing">Sharing Private Information</option>
+              <option value="exclusion">Exclusion / Social Attack</option>
+              <option value="cyberstalking">Cyberstalking</option>
+              <option value="hate_speech">Hate Speech</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Platform Where It Occurred</label>
+            <select class="form-select" id="platform" required>
+              <option value="">Select platform…</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="snapchat">Snapchat</option>
+              <option value="twitter">Twitter / X</option>
+              <option value="tiktok">TikTok</option>
+              <option value="discord">Discord</option>
+              <option value="youtube">YouTube</option>
+              <option value="gaming">Gaming Platform</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Describe What Happened</label>
+          <textarea class="form-textarea" id="reportDesc" required placeholder="Please provide as much detail as possible — what was said, when it started, how often it happens…" style="min-height:140px"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Your Contact Email <span style="font-weight:400;color:var(--muted)">(Optional)</span></label>
+            <input type="email" class="form-input" id="contactEmail" placeholder="email@example.com"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">When Did This Start?</label>
+            <input type="date" class="form-input" id="incidentDate"/>
+          </div>
+        </div>
+        <div class="form-checkbox">
+          <input type="checkbox" id="reportAnon" checked/>
+          <label for="reportAnon">Keep my report anonymous</label>
+        </div>
+        <button type="submit" class="submit-btn">
+          <span class="spinner"></span>
+          <span class="btn-text">Submit Report →</span>
+        </button>
+      </form>
+      <div class="error-message" id="reportError">Something went wrong. Please try again.</div>
+      <div class="success-message" id="reportSuccess">
+        ✓ Report submitted successfully.<br>
+        <span style="font-size:0.9rem;opacity:0.8">Reference ID: <strong id="reportRefId"></strong> — save this to track your report.</span>
+      </div>
+    </div>
+
+    <!-- ANONYMOUS TIP TAB -->
+    <div id="anonymous-tab" class="report-content">
+      <form id="tipForm">
+        <div class="form-group">
+          <label class="form-label">Your Anonymous Tip</label>
+          <textarea class="form-textarea" id="tipDesc" required placeholder="Share any information about cyberbullying you've witnessed or heard about. Your identity is completely protected — no login, no tracking." style="min-height:180px;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Urgency Level</label>
+            <select class="form-select" id="urgency" required>
+              <option value="low">Low — General concern</option>
+              <option value="medium">Medium — Ongoing situation</option>
+              <option value="high">High — Immediate threat</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Affected Group</label>
+            <select class="form-select" id="affectedGroup">
+              <option value="">Select…</option>
+              <option value="individual">Individual student</option>
+              <option value="group">Group / multiple students</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">
+          <span class="spinner"></span>
+          <span class="btn-text">Submit Anonymous Tip →</span>
+        </button>
+      </form>
+      <div class="error-message" id="tipError">Something went wrong. Please try again.</div>
+      <div class="success-message" id="tipSuccess">
+        ✓ Tip received. Thank you for speaking up.<br>
+        <span style="font-size:0.9rem;opacity:0.8">Reference ID: <strong id="tipRefId"></strong></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATUS TRACKER -->
+<section id="status">
+  <p class="s-label reveal">Track Your Report</p>
+  <h2 class="s-heading reveal">Report <span class="em">Status</span> Tracker</h2>
+  <p class="s-sub reveal">Enter the Reference ID you received when you submitted your report to see its current status.</p>
+  <div class="status-tracker-card reveal">
+    <div class="status-input-row">
+      <input type="text" id="statusRefInput" placeholder="Enter Reference ID (e.g. DEMO-A1B2C3)…" autocomplete="off"/>
+      <button onclick="checkStatus()">Check Status</button>
+    </div>
+    <div id="statusResult" class="status-result"></div>
+  </div>
+</section>
+
+<!-- LIVE CHAT BUBBLE -->
+<div class="chat-bubble" id="chatBubble" onclick="toggleChat()">
+  <span class="chat-badge">1</span>
+</div>
+
+<!-- CHAT WINDOW -->
+<div class="chat-window" id="chatWindow">
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <h3>Support Chat</h3>
+      <p>🟢 Available now — confidential</p>
+    </div>
+    <div class="chat-header-actions">
+      <button class="chat-close" onclick="toggleChat()">×</button>
+    </div>
+  </div>
+  <div class="chat-quick-actions">
+    <span class="quick-chip" onclick="useQuickChip('I need help reporting something')">Report</span>
+    <span class="quick-chip" onclick="useQuickChip('I\'m scared and don\'t know what to do')">I\'m scared</span>
+    <span class="quick-chip" onclick="useQuickChip('How do I block someone?')">Block tips</span>
+    <span class="quick-chip" onclick="useQuickChip('What resources are available?')">Resources</span>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-message">
+      <div class="chat-avatar">🛡️</div>
+      <div>
+        <div class="chat-message-content">
+          Hi, I'm here to help. 💙 You can talk to me about anything — whether you need resources, want to report something, or just need someone to listen. How can I support you today?
+        </div>
+        <div class="chat-message-time">Now</div>
+      </div>
+    </div>
+  </div>
+  <div class="typing-indicator" id="typingIndicator">
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+  </div>
+  <div class="chat-input-area">
+    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message…" onkeypress="handleChatKeypress(event)"/>
+    <button class="chat-send" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<!-- IMPACT SECTION -->
+<section id="impact">
+  <p class="s-label reveal">Real Stories</p>
+  <h2 class="s-heading reveal">They Found Their <span class="em">Voice</span></h2>
+  <p class="s-sub reveal">Survivors who spoke up and reclaimed their power. You are not alone.</p>
+  <div class="impact-grid">
+    <div class="impact-card reveal">
+      <p class="impact-quote">I felt completely alone until I reached out. The helpline gave me the courage to tell my parents. Now I'm part of a support group helping others.</p>
+      <p class="impact-name">Priya M.</p>
+      <p class="impact-age">16, Mumbai</p>
+    </div>
+    <div class="impact-card reveal" style="transition-delay:0.1s">
+      <p class="impact-quote">They created a fake profile of me and spread rumours for months. I reported it, blocked them, and now I help schools teach digital safety.</p>
+      <p class="impact-name">Arjun K.</p>
+      <p class="impact-age">17, Bangalore</p>
+    </div>
+    <div class="impact-card reveal" style="transition-delay:0.2s">
+      <p class="impact-quote">My classmates excluded me from group chats and spread lies. I thought it was my fault. Counselling helped me understand it wasn't. I'm okay now.</p>
+      <p class="impact-name">Ananya S.</p>
+      <p class="impact-age">15, Delhi</p>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="stats-grid">
+    <div class="stat-item reveal">
+      <div class="stat-number"><span id="c1">0</span>%</div>
+      <p class="stat-label">of Indian teens have experienced cyberbullying</p>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:0.1s">
+      <div class="stat-number"><span id="c2">0</span><span>/10</span></div>
+      <p class="stat-label">victims never tell an adult what happened</p>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:0.2s">
+      <div class="stat-number"><span id="c3">0</span>%</div>
+      <p class="stat-label">say cyberbullying affected their mental health</p>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:0.3s">
+      <div class="stat-number"><span id="c4">0</span>%</div>
+      <p class="stat-label">of bullying happens on social media platforms</p>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ SECTION -->
+<section id="quiz">
+  <p class="s-label reveal">Test Your Knowledge</p>
+  <h2 class="s-heading reveal">The Cyberbullying <span class="em">Awareness Quiz</span></h2>
+  <p class="s-sub reveal">8 questions. See how much you know — and learn something new. Takes 3 minutes.</p>
+
+  <div class="quiz-card">
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+    <div class="quiz-inner" id="quiz-inner">
+      <div class="quiz-meta">
+        <span class="quiz-step-label" id="quiz-step-label">Question 1 of 8</span>
+        <span class="quiz-score-label" id="quiz-score-label">Score: 0/8</span>
+      </div>
+      <p class="quiz-question" id="quiz-question-text"></p>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+      <div class="quiz-nav">
+        <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuizQuestion()">Next →</button>
+      </div>
+    </div>
+    <div class="quiz-results" id="quiz-results">
+      <div class="quiz-results-score" id="quiz-results-score">0/8</div>
+      <div class="quiz-results-label" id="quiz-results-tier"></div>
+      <p class="quiz-results-sub" id="quiz-results-message"></p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <button class="btn-red" onclick="initQuiz()">Retake Quiz</button>
+        <a href="#resources" class="btn-ghost">Explore Resources →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIGITAL SAFETY SCORE -->
+<section id="safety-score">
+  <p class="s-label reveal">Self Assessment</p>
+  <h2 class="s-heading reveal">Your Digital <span class="em">Safety Score</span></h2>
+  <p class="s-sub reveal">Check the practices you already follow. See your personal safety score and where to improve.</p>
+  <div class="score-card reveal">
+    <div class="score-meter-wrap">
+      <div class="score-meter-header">
+        <span class="score-meter-label">Your Safety Score</span>
+        <span class="score-number" id="score-number">0</span>
+      </div>
+      <div class="score-track"><div class="score-fill" id="score-fill" style="width:0%"></div></div>
+      <div class="score-tier-labels">
+        <span class="score-tier-label">At Risk</span>
+        <span class="score-tier-label">Aware</span>
+        <span class="score-tier-label">Protected</span>
+        <span class="score-tier-label">Expert</span>
+      </div>
+    </div>
+    <div class="score-checklist" id="score-checklist">
+      <div class="score-check-item"><input type="checkbox" id="sc1"/><label for="sc1">I have two-factor authentication (2FA) enabled on my main accounts</label><span class="check-pts">+15</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc2"/><label for="sc2">My social media profiles are set to private or friends-only</label><span class="check-pts">+15</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc3"/><label for="sc3">I know how to block and report on every app I use regularly</label><span class="check-pts">+10</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc4"/><label for="sc4">I don't share my live location publicly in posts or stories</label><span class="check-pts">+10</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc5"/><label for="sc5">I have a trusted adult I can tell if something goes wrong online</label><span class="check-pts">+15</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc6"/><label for="sc6">I know the cybercrime helpline number (1930)</label><span class="check-pts">+5</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc7"/><label for="sc7">I use different passwords for different apps and websites</label><span class="check-pts">+10</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc8"/><label for="sc8">I think before I post — I ask if I'd be comfortable with a stranger seeing this</label><span class="check-pts">+10</span></div>
+      <div class="score-check-item"><input type="checkbox" id="sc9"/><label for="sc9">I never share personal info (address, school name) with strangers online</label><span class="check-pts">+10</span></div>
+    </div>
+    <div class="score-tips" id="score-tips">
+      <p style="font-weight:800;font-size:0.85rem;color:var(--dark);margin-bottom:0.5rem">Your Action Items:</p>
+      <div class="score-tip-list" id="score-tip-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- BYSTANDER ACTION GUIDE -->
+<section id="bystander">
+  <p class="s-label reveal">For Witnesses</p>
+  <h2 class="s-heading reveal">The Bystander <span class="em">Action Guide</span></h2>
+  <p class="s-sub reveal">If you witness cyberbullying, you have more power than you think. Here's a step-by-step guide.</p>
+  <div class="bystander-flow">
+    <div class="bystander-step-card reveal">
+      <div class="bystander-num">01</div>
+      <div class="bystander-icon">👁️</div>
+      <div class="bystander-title">Recognise it for what it is</div>
+      <p class="bystander-desc">If someone is being mocked, threatened, excluded, or humiliated online — even "as a joke" — that's cyberbullying. You don't need to be a victim to take action. Identifying it is the first step.</p>
+      <div class="bystander-tags"><span class="bystander-tag">Harassment</span><span class="bystander-tag">Mocking</span><span class="bystander-tag">Exclusion</span><span class="bystander-tag">Threats</span></div>
+    </div>
+    <div class="bystander-connector">↓</div>
+    <div class="bystander-step-card reveal" style="transition-delay:0.1s">
+      <div class="bystander-num">02</div>
+      <div class="bystander-icon">🚫</div>
+      <div class="bystander-title">Don't engage or amplify</div>
+      <p class="bystander-desc">Do not like, share, comment on, or laugh at content targeting someone. Every reaction feeds the cycle. Leaving the group chat or unfollowing the thread removes your participation from the equation.</p>
+      <div class="bystander-tags"><span class="bystander-tag">Don't Share</span><span class="bystander-tag">Don't React</span><span class="bystander-tag">Leave the Thread</span></div>
+    </div>
+    <div class="bystander-connector">↓</div>
+    <div class="bystander-step-card reveal" style="transition-delay:0.2s">
+      <div class="bystander-num">03</div>
+      <div class="bystander-icon">📸</div>
+      <div class="bystander-title">Document the evidence</div>
+      <p class="bystander-desc">Screenshot the harmful content before it disappears — including timestamps and usernames. This evidence can be reported to the platform, school, or authorities. Use our <a href="#report" style="color:var(--red);font-weight:700">Evidence Upload</a> to store it securely.</p>
+      <div class="bystander-tags"><span class="bystander-tag">Screenshot</span><span class="bystander-tag">Save Timestamp</span><span class="bystander-tag">Note Username</span></div>
+    </div>
+    <div class="bystander-connector">↓</div>
+    <div class="bystander-step-card reveal" style="transition-delay:0.3s">
+      <div class="bystander-num">04</div>
+      <div class="bystander-icon">🤝</div>
+      <div class="bystander-title">Support the target privately</div>
+      <p class="bystander-desc">Reach out to the person being bullied privately — not publicly. Let them know you saw it, you believe them, and you're on their side. Often, knowing someone cares is the most powerful thing a bystander can do.</p>
+      <div class="bystander-tags"><span class="bystander-tag">Private Message</span><span class="bystander-tag">Show Support</span><span class="bystander-tag">"I Believe You"</span></div>
+    </div>
+    <div class="bystander-connector">↓</div>
+    <div class="bystander-step-card reveal" style="transition-delay:0.4s">
+      <div class="bystander-num">05</div>
+      <div class="bystander-icon">🚨</div>
+      <div class="bystander-title">Report it — on the platform and beyond</div>
+      <p class="bystander-desc">Use the platform's built-in report tools to flag the content. If there's a real threat involved, report to the school or call 1930. You can file a report on this site anonymously without giving your name.</p>
+      <div class="bystander-tags"><span class="bystander-tag">Report to Platform</span><span class="bystander-tag">Tell a Teacher</span><span class="bystander-tag">Call 1930</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORM SCREENSHOT GUIDE -->
+<section id="platform-guide">
+  <p class="s-label reveal">How-To Guides</p>
+  <h2 class="s-heading reveal">Report on Every <span class="em">Platform</span></h2>
+  <p class="s-sub reveal">Step-by-step instructions to block, report, and screenshot evidence on every major platform.</p>
+  <div class="platform-tabs-row reveal">
+    <button class="platform-tab-btn active" data-platform="instagram" onclick="switchPlatformTab('instagram')">📸 Instagram</button>
+    <button class="platform-tab-btn" data-platform="whatsapp" onclick="switchPlatformTab('whatsapp')">💬 WhatsApp</button>
+    <button class="platform-tab-btn" data-platform="snapchat" onclick="switchPlatformTab('snapchat')">👻 Snapchat</button>
+    <button class="platform-tab-btn" data-platform="tiktok" onclick="switchPlatformTab('tiktok')">🎵 TikTok</button>
+    <button class="platform-tab-btn" data-platform="discord" onclick="switchPlatformTab('discord')">🎮 Discord</button>
+  </div>
+
+  <!-- INSTAGRAM -->
+  <div class="platform-panel active" id="platform-instagram">
+    <div class="platform-step-card reveal"><div class="platform-step-num">01</div><div class="platform-step-title">Screenshot the Evidence</div><p class="platform-step-desc">Press Home + Power (iPhone) or Volume Down + Power (Android) simultaneously. Do this BEFORE blocking or reporting.</p><div class="platform-step-path">Phone buttons → Screenshot saved to Gallery</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.06s"><div class="platform-step-num">02</div><div class="platform-step-title">Block the Account</div><p class="platform-step-desc">Visit their profile → tap the three-dot menu (⋯) in the top right → select "Block" → confirm. They will not be notified.</p><div class="platform-step-path">Profile → ⋯ → Block → Block Account</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.12s"><div class="platform-step-num">03</div><div class="platform-step-title">Report the Post or Message</div><p class="platform-step-desc">Tap and hold the message or tap ⋯ on a post → "Report" → choose "Bullying or Harassment" → follow prompts. Reports are reviewed by Instagram's team.</p><div class="platform-step-path">Message → Hold → Report → Bullying or Harassment</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.18s"><div class="platform-step-num">04</div><div class="platform-step-title">Restrict the Account</div><p class="platform-step-desc">Restricting is softer than blocking — the person can't see when you're active or if you've read their messages. Good for known classmates.</p><div class="platform-step-path">Profile → ⋯ → Restrict</div></div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <div class="platform-panel" id="platform-whatsapp">
+    <div class="platform-step-card reveal"><div class="platform-step-num">01</div><div class="platform-step-title">Screenshot Harmful Messages</div><p class="platform-step-desc">Take screenshots of abusive messages showing sender name, timestamp, and content. WhatsApp shows timestamps on individual messages — tap them to confirm.</p><div class="platform-step-path">Message → Tap → Info → Screenshot</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.06s"><div class="platform-step-num">02</div><div class="platform-step-title">Block the Contact</div><p class="platform-step-desc">Open chat → tap their name at top → scroll down → "Block". For groups: Open group → tap group name → "Exit Group", then block the admin or members.</p><div class="platform-step-path">Chat → Name → Block Contact</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.12s"><div class="platform-step-num">03</div><div class="platform-step-title">Report to WhatsApp</div><p class="platform-step-desc">When you block, WhatsApp will ask if you want to report the contact. Tap "Report and Block". This sends recent messages to WhatsApp's team for review.</p><div class="platform-step-path">Block → "Report and Block"</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.18s"><div class="platform-step-num">04</div><div class="platform-step-title">Report a Group</div><p class="platform-step-desc">If a group chat is used to bully: Open group → tap group name → scroll to bottom → "Report Group". Exit the group afterward for your safety.</p><div class="platform-step-path">Group → Group Name → Report Group → Exit Group</div></div>
+  </div>
+
+  <!-- SNAPCHAT -->
+  <div class="platform-panel" id="platform-snapchat">
+    <div class="platform-step-card reveal"><div class="platform-step-num">01</div><div class="platform-step-title">Save Evidence Quickly</div><p class="platform-step-desc">Snaps disappear — use your phone's screenshot IMMEDIATELY before they vanish. Snapchat may notify the sender, but the evidence is more important.</p><div class="platform-step-path">Screenshot immediately → Saved to Camera Roll</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.06s"><div class="platform-step-num">02</div><div class="platform-step-title">Block the User</div><p class="platform-step-desc">Go to their profile by tapping their username → tap ⋯ → "Block". They will be removed from your friends list and cannot contact you.</p><div class="platform-step-path">Profile → ⋯ → Block</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.12s"><div class="platform-step-num">03</div><div class="platform-step-title">Report the User</div><p class="platform-step-desc">Visit their profile → tap ⋯ → "Report" → choose relevant category (Harassment, Threats, Bullying). Add details for a faster response.</p><div class="platform-step-path">Profile → ⋯ → Report → Harassment</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.18s"><div class="platform-step-num">04</div><div class="platform-step-title">Report a Story or Snap</div><p class="platform-step-desc">Press and hold on the story or snap → tap the flag icon → select reason → submit. Snapchat reviews all reports for safety violations.</p><div class="platform-step-path">Hold Snap/Story → 🚩 → Submit Report</div></div>
+  </div>
+
+  <!-- TIKTOK -->
+  <div class="platform-panel" id="platform-tiktok">
+    <div class="platform-step-card reveal"><div class="platform-step-num">01</div><div class="platform-step-title">Report a Harmful Comment</div><p class="platform-step-desc">Long-press the comment → tap "Report" → select "Bullying and harassment". TikTok has a dedicated anti-bullying team that reviews reports.</p><div class="platform-step-path">Comment → Long Press → Report → Bullying</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.06s"><div class="platform-step-num">02</div><div class="platform-step-title">Report a Video</div><p class="platform-step-desc">Tap the Share arrow (➤) on the video → "Report" → select relevant violation. For videos targeting someone specifically, choose "Bullying and harassment".</p><div class="platform-step-path">Video → Share (➤) → Report → Category</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.12s"><div class="platform-step-num">03</div><div class="platform-step-title">Block & Filter Comments</div><p class="platform-step-desc">Visit profile → tap ⋯ → "Block". You can also use Comment Filters (Settings → Privacy → Comments) to automatically hide harmful keywords.</p><div class="platform-step-path">Profile → ⋯ → Block | Settings → Privacy → Comment Filters</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.18s"><div class="platform-step-num">04</div><div class="platform-step-title">Report Account to TikTok</div><p class="platform-step-desc">Visit profile → tap ⋯ → "Report" → "Pretending to be someone" or "Bullying and harassment". Serious cases are escalated to law enforcement if needed.</p><div class="platform-step-path">Profile → ⋯ → Report → Bullying</div></div>
+  </div>
+
+  <!-- DISCORD -->
+  <div class="platform-panel" id="platform-discord">
+    <div class="platform-step-card reveal"><div class="platform-step-num">01</div><div class="platform-step-title">Copy Message Link for Evidence</div><p class="platform-step-desc">Right-click (or hold on mobile) any message → "Copy Message Link". This creates a permanent URL to the exact message — far better than a screenshot alone.</p><div class="platform-step-path">Right-click message → Copy Message Link</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.06s"><div class="platform-step-num">02</div><div class="platform-step-title">Block the User</div><p class="platform-step-desc">Click their profile picture → click ⋯ → "Block". Blocked users cannot DM you or see your messages in shared servers.</p><div class="platform-step-path">Profile Picture → ⋯ → Block</div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.12s"><div class="platform-step-num">03</div><div class="platform-step-title">Report to Discord</div><p class="platform-step-desc">Right-click the message → "Report Message". Include the copied message link. For serious threats, email Discord's Trust & Safety: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6417050201101d24000d17070b16004a070b09">[email&#160;protected]</a></p><div class="platform-step-path">Right-click → Report Message | <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="95e6f4f3f0e1ecd5f1fce6f6fae7f1bbf6faf8">[email&#160;protected]</a></div></div>
+    <div class="platform-step-card reveal" style="transition-delay:0.18s"><div class="platform-step-num">04</div><div class="platform-step-title">Report the Server</div><p class="platform-step-desc">If a whole server is toxic or targeting you, go to Discord's report page: discord.com/safety. Provide the server invite link and message evidence.</p><div class="platform-step-path">discord.com/safety → Report a server</div></div>
+  </div>
+</section>
+<section id="visualization">
+  <p class="s-label reveal">The Data</p>
+  <h2 class="s-heading reveal">Understanding the <span class="em">Scale</span></h2>
+  <p class="s-sub reveal">These numbers represent real people, real pain, and real need for change.</p>
+  <div class="vis-grid">
+    <div class="vis-item reveal">
+      <div class="vis-label"><span>Feel unsafe online</span><span class="vis-percent">73%</span></div>
+      <div class="vis-bar"><div class="vis-bar-fill" data-width="73"></div></div>
+      <p class="vis-caption">Nearly 3 in 4 young people don't feel safe expressing themselves online due to fear of harassment.</p>
+    </div>
+    <div class="vis-item reveal" style="transition-delay:0.08s">
+      <div class="vis-label"><span>Witnessed cyberbullying</span><span class="vis-percent">84%</span></div>
+      <div class="vis-bar"><div class="vis-bar-fill" data-width="84"></div></div>
+      <p class="vis-caption">Most teens have seen cyberbullying happen to others but didn't know how to intervene.</p>
+    </div>
+    <div class="vis-item reveal" style="transition-delay:0.16s">
+      <div class="vis-label"><span>Experience depression</span><span class="vis-percent">64%</span></div>
+      <div class="vis-bar"><div class="vis-bar-fill" data-width="64"></div></div>
+      <p class="vis-caption">Victims of cyberbullying are significantly more likely to experience anxiety and depression.</p>
+    </div>
+    <div class="vis-item reveal" style="transition-delay:0.24s">
+      <div class="vis-label"><span>Never report it</span><span class="vis-percent">58%</span></div>
+      <div class="vis-bar"><div class="vis-bar-fill" data-width="58"></div></div>
+      <p class="vis-caption">More than half of victims stay silent, often due to shame or fear of retaliation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WARNING SIGNS -->
+<section id="warning">
+  <p class="s-label reveal">Awareness</p>
+  <h2 class="s-heading reveal">Recognise the <span class="em">Warning Signs</span></h2>
+  <p class="s-sub reveal">If you notice these behaviours in yourself or someone you care about, reach out for help.</p>
+  <div class="warning-grid">
+    <div class="warning-card reveal"><div class="warning-icon">📱</div><h3 class="warning-title">Device Anxiety</h3><p class="warning-desc">Nervous around their phone, hiding screens, or seeming upset after using social media.</p></div>
+    <div class="warning-card reveal" style="transition-delay:0.05s"><div class="warning-icon">🚫</div><h3 class="warning-title">Social Withdrawal</h3><p class="warning-desc">Avoiding friends, skipping school or activities they used to enjoy, isolating themselves.</p></div>
+    <div class="warning-card reveal" style="transition-delay:0.1s"><div class="warning-icon">😔</div><h3 class="warning-title">Mood Changes</h3><p class="warning-desc">Sudden sadness, anger, irritability, or emotional outbursts after being online.</p></div>
+    <div class="warning-card reveal" style="transition-delay:0.15s"><div class="warning-icon">😴</div><h3 class="warning-title">Sleep Disruption</h3><p class="warning-desc">Trouble sleeping, nightmares, or staying up late obsessively checking devices.</p></div>
+    <div class="warning-card reveal" style="transition-delay:0.2s"><div class="warning-icon">📚</div><h3 class="warning-title">Declining Grades</h3><p class="warning-desc">Drop in academic performance, lack of focus, or not wanting to attend school.</p></div>
+    <div class="warning-card reveal" style="transition-delay:0.25s"><div class="warning-icon">💔</div><h3 class="warning-title">Low Self-Esteem</h3><p class="warning-desc">Talking negatively about themselves, feeling worthless, or expressing hopelessness.</p></div>
+  </div>
+</section>
+
+<!-- HELP SECTION -->
+<section id="help">
+  <p class="s-label reveal">Action Steps</p>
+  <h2 class="s-heading reveal">What You Can <span class="em">Do</span></h2>
+  <p class="s-sub reveal">Whether you're being bullied, you witnessed it, or you're a parent — here's how to take action.</p>
+  <div class="help-grid">
+    <div class="help-card reveal">
+      <div class="help-num">01</div>
+      <h3 class="help-title">Document Everything</h3>
+      <p class="help-desc">Screenshot messages, posts, and threats. Save timestamps and URLs. Use our Evidence Upload above to store it securely — you won't need an account.</p>
+    </div>
+    <div class="help-card reveal" style="transition-delay:0.1s">
+      <div class="help-num">02</div>
+      <h3 class="help-title">Block & Report</h3>
+      <p class="help-desc">Use platform tools to block the bully and report abuse. Most social media sites have built-in reporting for harassment — use it every time.</p>
+    </div>
+    <div class="help-card reveal" style="transition-delay:0.2s">
+      <div class="help-num">03</div>
+      <h3 class="help-title">Tell Someone You Trust</h3>
+      <p class="help-desc">Talk to a parent, teacher, counsellor, or trusted adult. You don't have to face this alone — support is available around the clock.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section id="manifesto">
+  <div class="manifesto-glow"></div>
+  <p class="manifesto-eyebrow reveal">What We Believe</p>
+  <div class="manifesto-words reveal">
+    <span class="lit">THE INTERNET </span><span class="accent">SHOULD BE</span><br>
+    <span class="lit">A PLACE WHERE EVERYONE</span><br>
+    <span class="lit">BELONGS</span><span class="accent">.</span> <span class="lit">NOT A PLACE</span><br>
+    <span class="lit">WHERE PEOPLE </span><span class="accent">FEAR.</span>
+  </div>
+  <p class="manifesto-sub reveal">We believe every young person deserves to exist online without fear, harassment, or shame. The internet is a human space — and humanity means compassion.</p>
+  <a href="#pledge" class="btn-red reveal" style="position:relative;z-index:1;">Join the Movement →</a>
+</section>
+
+<!-- COMMUNITY STORIES WALL -->
+<section id="stories-wall">
+  <p class="s-label reveal">Community</p>
+  <h2 class="s-heading reveal">Real Voices, <span class="em">Real Strength</span></h2>
+  <p class="s-sub reveal">Stories from survivors, bystanders, parents, and teachers. Add your own voice to the wall.</p>
+  <div class="stories-grid" id="stories-grid"><!-- Rendered by JS --></div>
+
+  <div class="submit-story-form reveal">
+    <h3>Share Your Story</h3>
+    <p>Your story could help someone else find the courage to speak up. All submissions are reviewed before publishing. You can remain anonymous.</p>
+    <form id="storySubmitForm">
+      <div class="story-form-row">
+        <div class="form-group">
+          <label class="form-label">Your Name <span style="font-weight:400;color:var(--muted)">(or Anonymous)</span></label>
+          <input class="form-input" id="storyName" placeholder="First name or 'Anonymous'"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City / State</label>
+          <input class="form-input" id="storyCity" placeholder="e.g. Mumbai, Maharashtra"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Story Category</label>
+        <select class="form-select" id="storyTag">
+          <option value="Survivor">Survivor</option>
+          <option value="Recovery">Recovery</option>
+          <option value="Bystander Win">Bystander Win</option>
+          <option value="Parent Perspective">Parent Perspective</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Support Story">Support Story</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Story</label>
+        <textarea class="form-textarea" id="storyText" placeholder="Share what happened, how you got through it, or what you did to help someone else. Minimum 30 characters." style="min-height:140px"></textarea>
+        <p id="storyError" style="display:none;color:var(--red);font-size:0.85rem;margin-top:0.4rem">Please write at least 30 characters.</p>
+      </div>
+      <div class="form-checkbox">
+        <input type="checkbox" id="storyConsent" required/>
+        <label for="storyConsent">I consent to this story being displayed on the Unsilenced website. I confirm this is my own experience or one I have permission to share.</label>
+      </div>
+      <button type="submit" class="submit-btn"><span class="btn-text">Add My Story to the Wall →</span></button>
+    </form>
+    <div class="success-message" id="storyThanks" style="margin-top:1rem">✓ Thank you for sharing. Your story is being reviewed and will be published shortly.</div>
+  </div>
+</section>
+
+<!-- PARENT & SCHOOL TOOLKIT -->
+<section id="toolkit">
+  <p class="s-label reveal">For Adults</p>
+  <h2 class="s-heading reveal">Parent & School <span class="em">Toolkit</span></h2>
+  <p class="s-sub reveal">Practical resources for parents, teachers, and school administrators to prevent and respond to cyberbullying.</p>
+
+  <div class="toolkit-tabs reveal">
+    <button class="toolkit-tab-btn active" data-toolkit="parents" onclick="switchToolkitTab('parents')">👨‍👩‍👧 For Parents</button>
+    <button class="toolkit-tab-btn" data-toolkit="schools" onclick="switchToolkitTab('schools')">🏫 For Schools</button>
+    <button class="toolkit-tab-btn" data-toolkit="policy" onclick="switchToolkitTab('policy')">📋 Policy Templates</button>
+  </div>
+
+  <!-- PARENTS -->
+  <div class="toolkit-panel active" id="toolkit-parents">
+    <div class="toolkit-grid">
+      <div class="toolkit-card reveal">
+        <div class="toolkit-icon">💬</div>
+        <div class="toolkit-card-title">How to Start the Conversation</div>
+        <div class="toolkit-card-desc">Most children won't come to you first. This guide covers non-threatening conversation starters, what NOT to say, and how to make your child feel safe coming to you.</div>
+        <ul class="toolkit-checklist">
+          <li>Ask about their online life regularly, not just when something goes wrong</li>
+          <li>Never dismiss "it's just the internet" — online pain is real pain</li>
+          <li>Don't take devices away as punishment — it closes the communication door</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Parent Conversation Guide')">⬇ Download Guide (PDF)</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.08s">
+        <div class="toolkit-icon">🔍</div>
+        <div class="toolkit-card-title">Warning Signs Checklist</div>
+        <div class="toolkit-card-desc">A printable one-page checklist of behavioural, emotional, and academic warning signs that your child may be experiencing cyberbullying.</div>
+        <ul class="toolkit-checklist">
+          <li>Avoiding phone/devices after previously being glued to them</li>
+          <li>Emotional distress after using social media</li>
+          <li>Unexplained withdrawal from friends or activities</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Warning Signs Checklist')">⬇ Download Checklist (PDF)</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.16s">
+        <div class="toolkit-icon">⚖️</div>
+        <div class="toolkit-card-title">Legal Action Guide for Parents</div>
+        <div class="toolkit-card-desc">Know your rights. This guide explains which laws protect your child, how to file a complaint, and what to expect from the police and court process.</div>
+        <ul class="toolkit-checklist">
+          <li>IT Act 2000 — Sections 66, 66C, 67, 72</li>
+          <li>IPC Sections 499, 503, 506, 507, 509</li>
+          <li>Protection of Children from Sexual Offences (POCSO) Act</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Legal Action Guide')">⬇ Download Legal Guide (PDF)</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.24s">
+        <div class="toolkit-icon">🧠</div>
+        <div class="toolkit-card-title">Supporting Mental Health at Home</div>
+        <div class="toolkit-card-desc">Cyberbullying leaves emotional scars. This resource helps parents support their child's mental health and know when to seek professional help.</div>
+        <ul class="toolkit-checklist">
+          <li>Validate feelings without catastrophising</li>
+          <li>Maintain routines and offline activities</li>
+          <li>When to involve a professional counsellor</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Mental Health Support Guide')">⬇ Download Resource (PDF)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHOOLS -->
+  <div class="toolkit-panel" id="toolkit-schools">
+    <div class="toolkit-grid">
+      <div class="toolkit-card reveal">
+        <div class="toolkit-icon">🎓</div>
+        <div class="toolkit-card-title">Digital Literacy Lesson Plan</div>
+        <div class="toolkit-card-desc">A ready-to-use 45-minute lesson plan for grades 7–12 on cyberbullying awareness, digital empathy, and safe online behaviour.</div>
+        <ul class="toolkit-checklist">
+          <li>Interactive group activity and discussion prompts</li>
+          <li>Real scenario role-play exercises</li>
+          <li>Assessment rubric included</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Lesson Plan — Cyberbullying Awareness')">⬇ Download Lesson Plan</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.08s">
+        <div class="toolkit-icon">📢</div>
+        <div class="toolkit-card-title">Anonymous Reporting Setup Guide</div>
+        <div class="toolkit-card-desc">How to set up an anonymous reporting system in your school — from a simple suggestion box to a digital form — so students feel safe coming forward.</div>
+        <ul class="toolkit-checklist">
+          <li>Free tools that work in any school</li>
+          <li>How to communicate the system to students</li>
+          <li>How to process and respond to reports ethically</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Anonymous Reporting Setup Guide')">⬇ Download Setup Guide</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.16s">
+        <div class="toolkit-icon">🧑‍🏫</div>
+        <div class="toolkit-card-title">Staff Training Workshop</div>
+        <div class="toolkit-card-desc">A 2-hour facilitated workshop plan to train teachers and counsellors to identify, respond to, and prevent cyberbullying in their classrooms.</div>
+        <ul class="toolkit-checklist">
+          <li>Case studies from Indian school contexts</li>
+          <li>Intervention protocols and escalation paths</li>
+          <li>Parent communication templates</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Staff Training Workshop Plan')">⬇ Download Workshop Plan</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.24s">
+        <div class="toolkit-icon">📊</div>
+        <div class="toolkit-card-title">School Climate Survey Template</div>
+        <div class="toolkit-card-desc">A 15-question anonymous survey to measure cyberbullying prevalence in your school and identify at-risk groups. Includes analysis guidance.</div>
+        <ul class="toolkit-checklist">
+          <li>Validated questions used in national research</li>
+          <li>Anonymous format to maximise honest responses</li>
+          <li>Suggested follow-up actions by severity level</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('School Climate Survey Template')">⬇ Download Survey Template</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POLICY -->
+  <div class="toolkit-panel" id="toolkit-policy">
+    <div class="toolkit-grid">
+      <div class="toolkit-card reveal">
+        <div class="toolkit-icon">📄</div>
+        <div class="toolkit-card-title">School Anti-Cyberbullying Policy Template</div>
+        <div class="toolkit-card-desc">A comprehensive policy template that schools can adapt, covering definitions, prohibited behaviours, reporting procedures, and consequences.</div>
+        <ul class="toolkit-checklist">
+          <li>Aligned with CBSE and ICSE guidelines</li>
+          <li>Roles and responsibilities clearly defined</li>
+          <li>Covers student, staff, and parent conduct</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Anti-Cyberbullying Policy Template')">⬇ Download Policy (Word)</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.08s">
+        <div class="toolkit-icon">✉️</div>
+        <div class="toolkit-card-title">Parent Communication Templates</div>
+        <div class="toolkit-card-desc">Ready-to-send email templates for notifying parents of a cyberbullying incident — whether their child is a victim, bystander, or perpetrator.</div>
+        <ul class="toolkit-checklist">
+          <li>Victim notification with empathy-first language</li>
+          <li>Perpetrator family notification template</li>
+          <li>Witness/bystander parent communication</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Parent Communication Templates')">⬇ Download Templates</button>
+      </div>
+      <div class="toolkit-card reveal" style="transition-delay:0.16s">
+        <div class="toolkit-icon">🤝</div>
+        <div class="toolkit-card-title">Student Acceptable Use Policy</div>
+        <div class="toolkit-card-desc">A student-friendly agreement on responsible digital behaviour for school devices and online platforms. Designed to be signed at the start of each academic year.</div>
+        <ul class="toolkit-checklist">
+          <li>Age-appropriate language for grades 6–12</li>
+          <li>Clear consequences section</li>
+          <li>Includes parent/guardian co-signature section</li>
+        </ul>
+        <button class="toolkit-download-btn" onclick="downloadResource('Student Acceptable Use Policy')">⬇ Download AUP (PDF)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERSONAL SAFETY PLAN BUILDER -->
+<section id="safety-plan">
+  <p class="s-label reveal">For You</p>
+  <h2 class="s-heading reveal">Build Your Personal <span class="em">Safety Plan</span></h2>
+  <p class="s-sub reveal">A step-by-step plan tailored to you — who to call, what to do, how to cope. Print it and keep it safe.</p>
+
+  <div class="plan-card reveal">
+    <div class="plan-steps-nav">
+      <button class="plan-step-tab active" data-plan-step="0" onclick="switchPlanStep(0)">Situation</button>
+      <button class="plan-step-tab" data-plan-step="1" onclick="switchPlanStep(1)">Evidence</button>
+      <button class="plan-step-tab" data-plan-step="2" onclick="switchPlanStep(2)">Contacts</button>
+      <button class="plan-step-tab" data-plan-step="3" onclick="switchPlanStep(3)">Coping</button>
+      <button class="plan-step-tab" data-plan-step="4" onclick="switchPlanStep(4)">My Plan</button>
+    </div>
+    <div class="plan-content-area">
+
+      <!-- STEP 1: Situation -->
+      <div class="plan-step-panel active" id="plan-panel-0">
+        <div class="plan-step-title">Describe Your Situation</div>
+        <p class="plan-step-sub">Understanding what's happening is the first step. This stays on your device — it's never sent anywhere unless you choose to submit a report.</p>
+        <div class="plan-input-grid">
+          <div>
+            <label class="plan-input-label">Your first name (or nickname)</label>
+            <input class="plan-input" id="plan-name" placeholder="e.g. Priya"/>
+          </div>
+          <div>
+            <label class="plan-input-label">How long has this been happening?</label>
+            <select class="plan-input" id="plan-duration">
+              <option value="">Select…</option>
+              <option>Just started (today)</option>
+              <option>A few days</option>
+              <option>1–2 weeks</option>
+              <option>More than a month</option>
+            </select>
+          </div>
+          <div class="plan-input-full">
+            <label class="plan-input-label">Briefly describe what's happening</label>
+            <textarea class="plan-input" id="plan-trigger" style="min-height:80px" placeholder="e.g. A group of classmates is sending me threatening messages and spreading rumours about me on Instagram…"></textarea>
+          </div>
+          <div>
+            <label class="plan-input-label">Which platform(s)?</label>
+            <input class="plan-input" id="plan-platform" placeholder="e.g. Instagram, WhatsApp"/>
+          </div>
+          <div>
+            <label class="plan-input-label">Have you told anyone yet?</label>
+            <select class="plan-input" id="plan-told">
+              <option value="">Select…</option>
+              <option>No, not yet</option>
+              <option>Yes, a friend</option>
+              <option>Yes, a parent</option>
+              <option>Yes, a teacher</option>
+              <option>Yes, reported online</option>
+            </select>
+          </div>
+        </div>
+        <div class="plan-nav-row"><div></div><button class="plan-nav-btn next" onclick="nextPlanStep()">Next: Evidence Plan →</button></div>
+      </div>
+
+      <!-- STEP 2: Evidence -->
+      <div class="plan-step-panel" id="plan-panel-1">
+        <div class="plan-step-title">Your Evidence Plan</div>
+        <p class="plan-step-sub">Before you block or delete anything, it's crucial to document everything. Here's what to collect and where to keep it.</p>
+        <div class="plan-input-grid">
+          <div class="plan-input-full">
+            <label class="plan-input-label">What evidence do you have so far?</label>
+            <textarea class="plan-input" id="plan-evidence" style="min-height:80px" placeholder="e.g. Screenshots of 5 threatening messages saved in my phone gallery. Screenshots of the fake profile they made."></textarea>
+          </div>
+          <div class="plan-input-full">
+            <label class="plan-input-label">Where are you storing the evidence?</label>
+            <input class="plan-input" id="plan-evidence-location" placeholder="e.g. Phone gallery + uploaded to this website using the Evidence Upload form"/>
+          </div>
+        </div>
+        <div style="padding:1rem;background:var(--blue-soft);border-radius:8px;font-size:0.88rem;color:var(--blue);margin-bottom:1rem;border-left:3px solid var(--blue)">
+          💡 <strong>Tip:</strong> Use our <a href="#report" style="color:var(--blue)">Evidence Upload</a> at the top of this page to store screenshots securely with a reference ID.
+        </div>
+        <div class="plan-nav-row">
+          <button class="plan-nav-btn back" onclick="prevPlanStep()">← Back</button>
+          <button class="plan-nav-btn next" onclick="nextPlanStep()">Next: Trusted Contacts →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Contacts -->
+      <div class="plan-step-panel" id="plan-panel-2">
+        <div class="plan-step-title">Your Trusted Contacts</div>
+        <p class="plan-step-sub">List people you can call on for support — family, friends, counsellors. Include at least one adult. These numbers stay only on your device.</p>
+        <div class="plan-contact-list" id="trusted-contacts-list">
+          <div class="plan-contact">
+            <div><label class="plan-input-label">Name</label><input class="plan-input" placeholder="e.g. Mum" data-contact-name="1"/></div>
+            <div><label class="plan-input-label">Phone / How to reach</label><input class="plan-input" placeholder="e.g. 98xxxxxxxx" data-contact-phone="1"/></div>
+          </div>
+          <div class="plan-contact">
+            <div><label class="plan-input-label">Name</label><input class="plan-input" placeholder="e.g. School Counsellor" data-contact-name="2"/></div>
+            <div><label class="plan-input-label">Phone / How to reach</label><input class="plan-input" placeholder="e.g. School office" data-contact-phone="2"/></div>
+          </div>
+        </div>
+        <button class="add-contact-btn" onclick="addTrustedContact()">+ Add another contact</button>
+        <div style="margin-top:1rem;padding:1rem;background:var(--red-soft);border-radius:8px;font-size:0.85rem;color:var(--red)">
+          🚨 Always include at least one adult. Pre-saved emergency contacts: <strong>1930</strong> (Cyber Crime) · <strong>9152987821</strong> (iCall)
+        </div>
+        <div class="plan-nav-row">
+          <button class="plan-nav-btn back" onclick="prevPlanStep()">← Back</button>
+          <button class="plan-nav-btn next" onclick="nextPlanStep()">Next: Coping Strategies →</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Coping -->
+      <div class="plan-step-panel" id="plan-panel-3">
+        <div class="plan-step-title">Your Coping Strategies</div>
+        <p class="plan-step-sub">What helps you feel safe, calm, or strong when you're struggling? Write it down so you have it when you need it most.</p>
+        <div class="plan-input-grid">
+          <div class="plan-input-full">
+            <label class="plan-input-label">What activities help you feel better? (offline things)</label>
+            <textarea class="plan-input" id="plan-coping" style="min-height:80px" placeholder="e.g. Going for a walk, talking to my sister, drawing, listening to music, playing cricket…"></textarea>
+          </div>
+          <div class="plan-input-full">
+            <label class="plan-input-label">What things should you avoid when you're feeling overwhelmed?</label>
+            <textarea class="plan-input" id="plan-avoid" style="min-height:60px" placeholder="e.g. Checking the group chat, scrolling Instagram late at night…"></textarea>
+          </div>
+          <div class="plan-input-full">
+            <label class="plan-input-label">One thing you want to remember when things feel bad:</label>
+            <input class="plan-input" id="plan-reminder" placeholder="e.g. This is not my fault. I am more than what they say about me."/>
+          </div>
+        </div>
+        <div class="plan-nav-row">
+          <button class="plan-nav-btn back" onclick="prevPlanStep()">← Back</button>
+          <button class="plan-nav-btn next" onclick="nextPlanStep()">Preview My Plan →</button>
+        </div>
+      </div>
+
+      <!-- STEP 5: Review -->
+      <div class="plan-step-panel" id="plan-panel-4">
+        <div class="plan-step-title">Your Safety Plan</div>
+        <p class="plan-step-sub">Review your completed plan below. Print it and keep it somewhere accessible — on your phone, in your wallet, or at home.</p>
+        <div class="plan-preview" id="plan-preview">
+          <div class="plan-preview-title">🛡️ My Personal Safety Plan</div>
+          <div id="plan-preview-content" class="plan-preview-value" style="color:var(--muted);font-size:0.9rem">Complete the previous steps to see your plan here.</div>
+        </div>
+        <div class="plan-nav-row">
+          <button class="plan-nav-btn back" onclick="prevPlanStep()">← Edit</button>
+          <button class="plan-nav-btn next print-btn" onclick="printSafetyPlan()">🖨 Print My Safety Plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRISIS CARDS -->
+<section id="crisis">
+  <p class="s-label reveal" style="color:rgba(255,255,255,0.5)">Immediate Action</p>
+  <h2 class="s-heading reveal" style="color:white">In a <span class="em">Crisis?</span> Act Now.</h2>
+  <p class="s-sub reveal" style="color:rgba(255,255,255,0.7)">Every second matters. Pick the action that fits your situation.</p>
+  <div class="crisis-grid">
+    <div class="crisis-card red-card reveal">
+      <div class="crisis-card-glow"></div>
+      <div class="crisis-card-icon">🆘</div>
+      <div class="crisis-card-title">Immediate Threat or Danger</div>
+      <p class="crisis-card-desc">You've received threats to your physical safety, someone knows your location, or you feel you're in immediate danger.</p>
+      <button class="crisis-card-action" onclick="openSOSModal()">Get Step-by-Step Help →</button>
+    </div>
+    <div class="crisis-card orange-card reveal" style="transition-delay:0.1s">
+      <div class="crisis-card-glow"></div>
+      <div class="crisis-card-icon">💬</div>
+      <div class="crisis-card-title">I Need Someone to Talk To</div>
+      <p class="crisis-card-desc">You're overwhelmed, scared, or don't know what to do. A trained counsellor is available right now, for free.</p>
+      <a href="tel:9152987821" class="crisis-card-action">Call iCall: 9152987821 →</a>
+    </div>
+    <div class="crisis-card blue-card reveal" style="transition-delay:0.2s">
+      <div class="crisis-card-glow"></div>
+      <div class="crisis-card-icon">📸</div>
+      <div class="crisis-card-title">Private Photos Being Shared</div>
+      <p class="crisis-card-desc">Someone is sharing or threatening to share intimate photos of you without your consent. This is illegal. Act immediately.</p>
+      <a href="https://cybercrime.gov.in" target="_blank" class="crisis-card-action">Report at cybercrime.gov.in →</a>
+    </div>
+    <div class="crisis-card green-card reveal" style="transition-delay:0.3s">
+      <div class="crisis-card-glow"></div>
+      <div class="crisis-card-icon">🏫</div>
+      <div class="crisis-card-title">It's Happening at School</div>
+      <p class="crisis-card-desc">The bullying involves classmates, school groups, or is spilling into your school life. Schools are required to act.</p>
+      <a href="#report" class="crisis-card-action">Report Anonymously →</a>
+    </div>
+  </div>
+</section>
+
+<!-- RESOURCES -->
+<section id="resources">
+  <p class="s-label reveal">Support & Help</p>
+  <h2 class="s-heading reveal">Find the Right <span class="em">Resource</span></h2>
+  <p class="s-sub reveal">You are not alone. These organisations are here for you — for free, 24/7.</p>
+  <div class="resources-grid">
+    <div class="res-card reveal"><p class="res-org">Government of India</p><h3>Cybercrime.gov.in</h3><p>India's national cybercrime portal. Report online harassment, threats, and abuse directly to authorities. Available 24/7 online.</p><a href="https://cybercrime.gov.in" class="res-link" target="_blank" rel="noopener">cybercrime.gov.in</a></div>
+    <div class="res-card reveal" style="transition-delay:0.08s"><p class="res-org">National Helpline</p><h3>iCall — 9152987821</h3><p>A psychological helpline by TISS offering free counselling to anyone experiencing mental distress from cyberbullying or harassment.</p><a href="https://icallhelpline.org" class="res-link" target="_blank" rel="noopener">icallhelpline.org</a></div>
+    <div class="res-card reveal" style="transition-delay:0.16s"><p class="res-org">Youth Mental Health</p><h3>Vandrevala Foundation</h3><p>Free, 24/7 mental health support across India in multiple languages. Call 1860-2662-345 anytime, day or night.</p><a href="https://vandrevalafoundation.com" class="res-link" target="_blank" rel="noopener">vandrevalafoundation.com</a></div>
+    <div class="res-card reveal" style="transition-delay:0.24s"><p class="res-org">For Parents & Schools</p><h3>Cyber Peace Foundation</h3><p>Workshops, toolkits, and programs for parents, schools, and organisations to build digital resilience and awareness.</p><a href="https://cyberpeace.org" class="res-link" target="_blank" rel="noopener">cyberpeace.org</a></div>
+    <div class="res-card reveal" style="transition-delay:0.32s"><p class="res-org">UNICEF India</p><h3>End Violence Online</h3><p>UNICEF's initiative offering tools, guides, and reporting mechanisms to combat online violence against children in India.</p><a href="https://unicef.org/india" class="res-link" target="_blank" rel="noopener">unicef.org/india</a></div>
+    <div class="res-card reveal" style="transition-delay:0.4s"><p class="res-org">Emergency Helpline</p><h3>Cyber Police: 1930</h3><p>India's dedicated cybercrime helpline for immediate assistance with online threats, harassment, and danger. Always free to call.</p><a href="tel:1930" class="res-link">Call 1930 Now</a></div>
+  </div>
+</section>
+
+<!-- PLEDGE -->
+<section id="pledge">
+  <p class="s-label">The Pledge</p>
+  <h2 class="s-heading">I Stand Against Cyberbullying</h2>
+  <p class="s-sub">Add your name and pledge to speak up, support others, and never stay silent when someone is being hurt online.</p>
+  <div class="pledge-names" id="pledgeNames">
+    <span class="pledge-chip">Arjun</span><span class="pledge-chip">Meera</span><span class="pledge-chip">Rohan</span>
+    <span class="pledge-chip">Ananya</span><span class="pledge-chip">Kavya</span><span class="pledge-chip">Vikram</span>
+    <span class="pledge-chip">Priya</span><span class="pledge-chip">Siddharth</span>
+  </div>
+  <div id="pledge-form-wrap">
+    <div class="pledge-form-wrap">
+      <input type="text" class="pledge-input" id="pledgeName" placeholder="Enter your first name…" maxlength="24"/>
+      <button class="pledge-btn" onclick="submitPledge()">Add My Name</button>
+    </div>
+    <p class="pledge-count">Joining <strong id="pledgeCounter">12,847</strong> people who have already taken the pledge.</p>
+  </div>
+  <div id="pledge-thanks"><span id="thanks-msg"></span></div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <p class="s-label reveal">Questions</p>
+  <h2 class="s-heading reveal">Frequently <span class="em">Asked</span></h2>
+  <div class="faq-list">
+    <div class="faq-item reveal"><button class="faq-q" onclick="toggleFaq(this)">What exactly counts as cyberbullying?<span class="arrow">+</span></button><div class="faq-a">Cyberbullying is any repeated, intentional harm carried out through digital technology — phones, social media, games, email, or messaging apps. It includes harassment, threats, impersonation, public shaming, doxxing, and exclusion. A single severe incident can also qualify.</div></div>
+    <div class="faq-item reveal" style="transition-delay:0.05s"><button class="faq-q" onclick="toggleFaq(this)">What should I do if my child is being cyberbullied?<span class="arrow">+</span></button><div class="faq-a">First, listen without judgment. Document evidence before deleting it. Contact the school and, if threats are involved, the cybercrime helpline (1930). Ensure your child feels supported and safe. Consider involving a counsellor. Do not confront the bully's parents directly without official support.</div></div>
+    <div class="faq-item reveal" style="transition-delay:0.1s"><button class="faq-q" onclick="toggleFaq(this)">Can cyberbullying be reported to police in India?<span class="arrow">+</span></button><div class="faq-a">Yes. Under the IT Act 2000 and IPC sections including 506 (criminal intimidation) and 509 (outraging modesty), cyberbullying is a criminal offence. File a complaint at cybercrime.gov.in or call helpline 1930 for immediate guidance.</div></div>
+    <div class="faq-item reveal" style="transition-delay:0.15s"><button class="faq-q" onclick="toggleFaq(this)">How do you store evidence? Is it private?<span class="arrow">+</span></button><div class="faq-a">Uploaded evidence is stored securely on Cloudinary with restricted access, and report data is stored on Firebase Firestore. Anonymous submissions contain no personally identifying information. Only designated administrators can access submitted reports.</div></div>
+    <div class="faq-item reveal" style="transition-delay:0.2s"><button class="faq-q" onclick="toggleFaq(this)">Is it possible to recover from cyberbullying?<span class="arrow">+</span></button><div class="faq-a">Absolutely. Many survivors go on to live full, joyful lives and even become advocates for others. Recovery takes time, support, and often professional help — but it is real and possible. Reaching out to a counsellor or helpline is the first step. You are not defined by what happened to you.</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-logo">UN<span class="dot">■</span>SILENCED</div>
+    <div class="footer-links">
+      <a href="#quiz">Quiz</a>
+      <a href="#safety-score">Safety Score</a>
+      <a href="#bystander">Bystander Guide</a>
+      <a href="#stories-wall">Stories</a>
+      <a href="#toolkit">Toolkit</a>
+      <a href="#safety-plan">Safety Plan</a>
+      <a href="#resources">Resources</a>
+      <a href="#pledge">Pledge</a>
+      <a href="admin/index.html" style="color:rgba(255,255,255,0.3)">Admin</a>
+    </div>
+    <span class="footer-hotline">📞 Emergency: 1930</span>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 Unsilenced Campaign — A public awareness initiative. Not-for-profit.</p>
+    <p class="footer-copy">Designed to protect, inform, and empower every young person in India.</p>
+  </div>
+</footer>
+
+<!-- CONFIG (Firebase + Cloudinary) — load first -->
+<script src="js/config.js"></script>
+<!-- Main App JS -->
+<script src="js/app.js"></script>
+<!-- New Features JS -->
+<script src="js/features.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

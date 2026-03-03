@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "pledgeCount": 12847,
+    "siteVersion": "2.0.0",
+    "lastUpdated": 1741017600000
+  },
+  "users": {
+    "UID_EXAMPLE_001": {
+      "uid": "UID_EXAMPLE_001",
+      "name": "Riya Kapoor",
+      "email": "riya@example.com",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "role": "student",
+      "ageGroup": "under18",
+      "emailVerified": true,
+      "reportCount": 2,
+      "quizBestScore": 7,
+      "createdAt": 1739800000000,
+      "updatedAt": 1739800000000,
+      "safetyPlan": {
+        "name": "Riya Kapoor",
+        "trigger": "Harassment in school WhatsApp group",
+        "platform": "WhatsApp",
+        "evidencePlan": "Screenshot all messages. Note date and time.",
+        "copingStrategies": "Talk to my sister. Listen to music. Take a walk.",
+        "savedAt": 1739900000000,
+        "trustedContacts": {
+          "contact_1": {
+            "name": "Mum",
+            "phone": "98xxxxxxxx"
+          },
+          "contact_2": {
+            "name": "School Counsellor",
+            "phone": "1930"
+          }
+        }
+      },
+      "reports": {
+        "ev_001_key": {
+          "path": "evidence",
+          "referenceId": "EV-4821",
+          "status": "under_review",
+          "createdAt": 1739800000000
+        },
+        "rp_001_key": {
+          "path": "reports",
+          "referenceId": "RP-7712",
+          "status": "escalated",
+          "createdAt": 1739500000000
+        }
+      }
+    },
+    "UID_EXAMPLE_002": {
+      "uid": "UID_EXAMPLE_002",
+      "name": "Arjun Sharma",
+      "email": "arjun@example.com",
+      "city": "Delhi",
+      "state": "Delhi",
+      "role": "teacher",
+      "ageGroup": "25plus",
+      "emailVerified": true,
+      "reportCount": 1,
+      "quizBestScore": 8,
+      "createdAt": 1738000000000,
+      "updatedAt": 1739000000000,
+      "safetyPlan": null,
+      "reports": {
+        "rp_002_key": {
+          "path": "reports",
+          "referenceId": "RP-5509",
+          "status": "resolved",
+          "createdAt": 1737000000000
+        }
+      }
+    }
+  },
+  "evidence": {
+    "ev_001_key": {
+      "type": "evidence",
+      "description": "Screenshots of Instagram DMs showing repeated threatening messages over 3 weeks.",
+      "isAnonymous": false,
+      "uid": "UID_EXAMPLE_001",
+      "status": "under_review",
+      "referenceId": "EV-4821",
+      "fileCount": 2,
+      "files": {
+        "file_001": {
+          "url": "https://res.cloudinary.com/delwuljga/image/upload/unsilenced-evidence/screenshot_001.jpg",
+          "publicId": "unsilenced-evidence/screenshot_001",
+          "format": "jpg",
+          "bytes": 204800,
+          "resourceType": "image",
+          "thumbnail": "https://res.cloudinary.com/delwuljga/image/upload/w_200,h_200,c_thumb/unsilenced-evidence/screenshot_001.jpg",
+          "uploadedAt": 1739800000000
+        },
+        "file_002": {
+          "url": "https://res.cloudinary.com/delwuljga/image/upload/unsilenced-evidence/screenshot_002.jpg",
+          "publicId": "unsilenced-evidence/screenshot_002",
+          "format": "jpg",
+          "bytes": 187392,
+          "resourceType": "image",
+          "thumbnail": "https://res.cloudinary.com/delwuljga/image/upload/w_200,h_200,c_thumb/unsilenced-evidence/screenshot_002.jpg",
+          "uploadedAt": 1739800000000
+        }
+      },
+      "createdAt": 1739800000000,
+      "updatedAt": 1739900000000
+    },
+    "ev_002_key": {
+      "type": "evidence",
+      "description": "Video recording of a live-stream where the victim was mocked publicly.",
+      "isAnonymous": true,
+      "uid": null,
+      "status": "received",
+      "referenceId": "EV-3394",
+      "fileCount": 1,
+      "files": {
+        "file_001": {
+          "url": "https://res.cloudinary.com/delwuljga/video/upload/unsilenced-evidence/video_001.mp4",
+          "publicId": "unsilenced-evidence/video_001",
+          "format": "mp4",
+          "bytes": 5242880,
+          "resourceType": "video",
+          "thumbnail": "https://res.cloudinary.com/delwuljga/video/upload/w_200,h_200,c_thumb/unsilenced-evidence/video_001.jpg",
+          "uploadedAt": 1739700000000
+        }
+      },
+      "createdAt": 1739700000000,
+      "updatedAt": 1739700000000
+    }
+  },
+  "reports": {
+    "rp_001_key": {
+      "type": "incident_report",
+      "incidentType": "impersonation",
+      "platform": "instagram",
+      "description": "A fake Instagram account was created using my photos and is spreading false rumours to classmates.",
+      "contactEmail": "riya@example.com",
+      "isAnonymous": false,
+      "uid": "UID_EXAMPLE_001",
+      "status": "escalated",
+      "referenceId": "RP-7712",
+      "createdAt": 1739500000000,
+      "updatedAt": 1740000000000
+    },
+    "rp_002_key": {
+      "type": "incident_report",
+      "incidentType": "harassment",
+      "platform": "whatsapp",
+      "description": "Multiple classmates have been sending abusive messages in a group chat every day for a month.",
+      "contactEmail": null,
+      "isAnonymous": true,
+      "uid": null,
+      "status": "resolved",
+      "referenceId": "RP-5509",
+      "createdAt": 1737000000000,
+      "updatedAt": 1739000000000
+    }
+  },
+  "tips": {
+    "tp_001_key": {
+      "type": "anonymous_tip",
+      "description": "Ongoing harassment campaign on a Discord server targeting a student. Multiple accounts involved.",
+      "urgency": "high",
+      "isAnonymous": true,
+      "uid": null,
+      "status": "under_review",
+      "referenceId": "TP-2281",
+      "createdAt": 1740200000000,
+      "updatedAt": 1740300000000
+    },
+    "tp_002_key": {
+      "type": "anonymous_tip",
+      "description": "A student in Class 10B is being blackmailed with a private photo and is too scared to report.",
+      "urgency": "critical",
+      "isAnonymous": true,
+      "uid": null,
+      "status": "escalated",
+      "referenceId": "TP-0934",
+      "createdAt": 1740100000000,
+      "updatedAt": 1740150000000
+    }
+  },
+  "pledges": {
+    "pl_001_key": {
+      "name": "Priya M.",
+      "uid": "UID_EXAMPLE_001",
+      "timestamp": 1739800000000,
+      "createdAt": 1739800000000
+    },
+    "pl_002_key": {
+      "name": "Anonymous",
+      "uid": null,
+      "timestamp": 1739700000000,
+      "createdAt": 1739700000000
+    },
+    "pl_003_key": {
+      "name": "Ravi T.",
+      "uid": "UID_EXAMPLE_002",
+      "timestamp": 1738000000000,
+      "createdAt": 1738000000000
+    }
+  },
+  "quiz_results": {
+    "qr_001_key": {
+      "uid": "UID_EXAMPLE_001",
+      "score": 7,
+      "total": 8,
+      "percentage": 88,
+      "tier": "Digital Safety Expert",
+      "takenAt": 1739800000000,
+      "createdAt": 1739800000000
+    },
+    "qr_002_key": {
+      "uid": "UID_EXAMPLE_002",
+      "score": 8,
+      "total": 8,
+      "percentage": 100,
+      "tier": "Digital Safety Expert",
+      "takenAt": 1738000000000,
+      "createdAt": 1738000000000
+    }
+  },
+  "stories": {
+    "st_001_key": {
+      "tag": "Recovery",
+      "text": "After months of harassment in our school group chat, I finally screenshotted everything and told my parents. The school took immediate action.",
+      "author": "R.K.",
+      "location": "Pune, Maharashtra",
+      "likes": 47,
+      "approved": true,
+      "uid": null,
+      "createdAt": 1738000000000
+    },
+    "st_002_key": {
+      "tag": "Bystander Win",
+      "text": "I saw someone being mocked on a gaming server. I reported the messages and left. Three others followed. The player was banned the next day.",
+      "author": "A.S.",
+      "location": "Chennai, Tamil Nadu",
+      "likes": 63,
+      "approved": true,
+      "uid": null,
+      "createdAt": 1737500000000
+    },
+    "st_003_key": {
+      "tag": "Parent Perspective",
+      "text": "My daughter was quiet for weeks. When she showed me the messages I was horrified. We reported together. Now she leads her school anti-bullying committee.",
+      "author": "Parent",
+      "location": "Hyderabad",
+      "likes": 91,
+      "approved": true,
+      "uid": null,
+      "createdAt": 1737000000000
+    },
+    "st_004_key": {
+      "tag": "Survivor",
+      "text": "A fake Instagram account was spreading lies about me. I filed a complaint and the account was taken down in 72 hours. You have more power than you think.",
+      "author": "N.V.",
+      "location": "Bangalore, Karnataka",
+      "likes": 38,
+      "approved": true,
+      "uid": null,
+      "createdAt": 1736500000000
+    },
+    "st_005_key": {
+      "tag": "Teacher",
+      "text": "We started a digital safety class. When we gave students a safe way to report, 11 ongoing bullying cases were flagged in the first week.",
+      "author": "M. Sharma, Teacher",
+      "location": "Delhi",
+      "likes": 82,
+      "approved": true,
+      "uid": null,
+      "createdAt": 1736000000000
+    },
+    "st_006_key": {
+      "tag": "Sibling Support",
+      "text": "My younger brother was being targeted. I sat with him, helped him block and report, then we told our parents together. He did not face it alone.",
+      "author": "D.M.",
+      "location": "Ahmedabad, Gujarat",
+      "likes": 29,
+      "approved": true,
+      "uid": null,
+      "createdAt": 1735500000000
+    }
+  }
+}
