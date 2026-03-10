@@ -3,526 +3,1732 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Dashboard — UNSILENCED</title>
+  <title>UNSILENCED — Admin Console</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../css/styles.css"/>
   <style>
-    body { background:var(--off); font-family:'Nunito Sans',sans-serif; }
-    body.dark { background:var(--dm-bg); }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* NAV */
-    .dash-nav {
-      background:white; border-bottom:2px solid var(--border); padding:0 5vw;
-      display:flex; align-items:center; justify-content:space-between;
-      height:64px; position:sticky; top:0; z-index:100;
+    :root {
+      --red:    #e8281e;
+      --orange: #f07030;
+      --green:  #1a9e6e;
+      --blue:   #2058c8;
+      --bg:     #0a0908;
+      --surface:#131110;
+      --card:   #1c1a17;
+      --border: #2a2720;
+      --text:   #f0ede8;
+      --muted:  #7a7670;
+      --yellow: #f0b429;
+      --sidebar-w: 220px;
     }
-    body.dark .dash-nav { background:var(--dm-surface); border-color:var(--dm-border); }
-    .dash-logo { font-family:'Bebas Neue',cursive; font-size:1.6rem; color:var(--dark); text-decoration:none; letter-spacing:2px; }
-    body.dark .dash-logo { color:var(--dm-text); }
-    .dash-logo .dot { color:var(--red); }
-    .dash-nav-right { display:flex; align-items:center; gap:1rem; }
-    .user-avatar {
-      width:36px; height:36px; border-radius:50%; background:var(--red);
-      display:flex; align-items:center; justify-content:center;
-      font-weight:800; font-size:0.9rem; color:white; cursor:pointer;
-      flex-shrink:0;
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
     }
-    .user-name-label { font-weight:800; font-size:0.88rem; color:var(--ink); }
-    body.dark .user-name-label { color:var(--dm-text); }
-    .nav-home-link { font-size:0.85rem; font-weight:700; color:var(--muted); text-decoration:none; }
-    .nav-home-link:hover { color:var(--red); }
-    .signout-btn { font-size:0.82rem; font-weight:700; color:var(--muted); background:none; border:none; cursor:pointer; padding:0.4rem 0.8rem; border-radius:6px; transition:all 0.2s; }
-    .signout-btn:hover { background:var(--red-soft); color:var(--red); }
 
-    /* LAYOUT */
-    .dash-layout { display:grid; grid-template-columns:240px 1fr; gap:0; min-height:calc(100vh - 64px); }
-    @media(max-width:900px){ .dash-layout{grid-template-columns:1fr;} .dash-sidebar{display:none;} }
-
-    /* SIDEBAR */
-    .dash-sidebar {
-      background:white; border-right:2px solid var(--border); padding:2rem 0;
-      position:sticky; top:64px; height:calc(100vh - 64px); overflow-y:auto;
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
     }
-    body.dark .dash-sidebar { background:var(--dm-surface); border-color:var(--dm-border); }
-    .sidebar-section-lbl { font-size:0.65rem; font-weight:800; letter-spacing:2.5px; text-transform:uppercase;
-      color:var(--muted); padding:0 1.5rem; margin-bottom:0.5rem; margin-top:1.5rem; }
-    .sidebar-section-lbl:first-child { margin-top:0; }
-    .sidebar-link {
-      display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.5rem;
-      font-size:0.88rem; font-weight:700; color:var(--muted); text-decoration:none;
-      transition:all 0.2s; border-right:3px solid transparent; cursor:pointer; background:none; border-left:none; border-top:none; border-bottom:none; width:100%; text-align:left; font-family:inherit;
+
+    .sidebar-brand {
+      padding: 1.4rem 1.2rem 1.2rem;
+      border-bottom: 1px solid var(--border);
     }
-    body.dark .sidebar-link { color:var(--dm-muted); }
-    .sidebar-link:hover { background:var(--off); color:var(--ink); }
-    body.dark .sidebar-link:hover { background:var(--dm-card); color:var(--dm-text); }
-    .sidebar-link.active { background:var(--red-soft); color:var(--red); border-right-color:var(--red); }
-    body.dark .sidebar-link.active { background:rgba(232,40,30,0.12); }
-    .sidebar-link .icon { font-size:1.1rem; }
-    .sidebar-badge { margin-left:auto; background:var(--red); color:white; font-size:0.65rem; font-weight:800; padding:0.15rem 0.5rem; border-radius:100px; }
-
-    /* MAIN */
-    .dash-main { padding:2.5rem 3rem; }
-    @media(max-width:700px){ .dash-main{padding:1.5rem;} }
-
-    .dash-panel { display:none; }
-    .dash-panel.active { display:block; animation:fadeIn 0.35s; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-
-    .panel-title { font-family:'Bebas Neue',cursive; font-size:2rem; color:var(--dark); margin-bottom:0.3rem; }
-    body.dark .panel-title { color:var(--dm-text); }
-    .panel-sub { font-size:0.9rem; color:var(--muted); margin-bottom:2rem; }
-
-    /* STAT CARDS */
-    .stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
-    .stat-card { background:white; border-radius:10px; padding:1.4rem; border:2px solid var(--border); transition:all 0.3s; }
-    body.dark .stat-card { background:var(--dm-card); border-color:var(--dm-border); }
-    .stat-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
-    .stat-card-num { font-family:'Bebas Neue',cursive; font-size:2.8rem; color:var(--red); line-height:1; }
-    .stat-card-lbl { font-size:0.78rem; font-weight:800; color:var(--muted); margin-top:0.2rem; text-transform:uppercase; letter-spacing:0.5px; }
-
-    /* REPORTS TABLE */
-    .reports-table-wrap { background:white; border-radius:10px; border:2px solid var(--border); overflow:hidden; }
-    body.dark .reports-table-wrap { background:var(--dm-card); border-color:var(--dm-border); }
-    .reports-table { width:100%; border-collapse:collapse; }
-    .reports-table th { padding:0.85rem 1.2rem; font-size:0.72rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); background:var(--off); text-align:left; border-bottom:2px solid var(--border); }
-    body.dark .reports-table th { background:var(--dm-surface); border-color:var(--dm-border); }
-    .reports-table td { padding:1rem 1.2rem; font-size:0.88rem; color:var(--ink); border-bottom:1px solid var(--border); }
-    body.dark .reports-table td { color:var(--dm-text); border-color:var(--dm-border); }
-    .reports-table tr:last-child td { border-bottom:none; }
-    .reports-table tr:hover td { background:var(--off); }
-    body.dark .reports-table tr:hover td { background:var(--dm-surface); }
-    .status-pill { display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.75rem; border-radius:100px; font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; }
-    .status-pill.received    { background:#fff8e1; color:#b8860b; }
-    .status-pill.reviewing   { background:var(--blue-soft); color:var(--blue); }
-    .status-pill.escalated   { background:#fff0ef; color:var(--red); }
-    .status-pill.resolved    { background:var(--green-soft); color:var(--green); }
-    .ref-code { font-family:monospace; font-size:0.8rem; background:var(--light); padding:0.2rem 0.5rem; border-radius:4px; color:var(--ink); }
-    body.dark .ref-code { background:var(--dm-surface); color:var(--dm-text); }
-    .empty-state { padding:3rem; text-align:center; color:var(--muted); }
-    .empty-state .empty-icon { font-size:3rem; margin-bottom:1rem; }
-    .empty-state p { font-size:0.92rem; line-height:1.7; margin-bottom:1.5rem; }
-
-    /* PROFILE FORM */
-    .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-    @media(max-width:600px){ .profile-grid{grid-template-columns:1fr;} }
-    .profile-card { background:white; border-radius:10px; padding:2rem; border:2px solid var(--border); margin-bottom:1.5rem; }
-    body.dark .profile-card { background:var(--dm-card); border-color:var(--dm-border); }
-    .profile-card-title { font-size:0.72rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--red); margin-bottom:1.2rem; }
-    .p-field { margin-bottom:1rem; }
-    .p-lbl { display:block; font-size:0.78rem; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; color:var(--ink); margin-bottom:0.4rem; }
-    body.dark .p-lbl { color:var(--dm-text); }
-    .p-inp { width:100%; padding:0.75rem 1rem; border:2px solid var(--border); border-radius:8px;
-      font-family:'Nunito Sans',sans-serif; font-size:0.92rem; color:var(--ink); background:white; transition:all 0.3s; outline:none; }
-    body.dark .p-inp { background:var(--dm-surface); border-color:var(--dm-border); color:var(--dm-text); }
-    .p-inp:focus { border-color:var(--red); }
-    .p-inp:disabled { opacity:0.6; cursor:default; }
-    .save-btn { padding:0.75rem 1.8rem; background:var(--red); color:white; border:none; border-radius:8px;
-      font-family:'Nunito Sans',sans-serif; font-weight:800; font-size:0.85rem; cursor:pointer; transition:all 0.3s; }
-    .save-btn:hover { background:#c01e15; transform:translateY(-2px); }
-    .danger-btn { padding:0.75rem 1.8rem; background:none; color:var(--red); border:2px solid var(--red); border-radius:8px;
-      font-family:'Nunito Sans',sans-serif; font-weight:800; font-size:0.85rem; cursor:pointer; transition:all 0.3s; }
-    .danger-btn:hover { background:var(--red); color:white; }
-
-    /* QUIZ HISTORY */
-    .quiz-history-list { display:flex; flex-direction:column; gap:0.75rem; }
-    .quiz-history-item { background:white; border-radius:8px; padding:1rem 1.2rem; border:2px solid var(--border);
-      display:flex; align-items:center; gap:1rem; transition:all 0.2s; }
-    body.dark .quiz-history-item { background:var(--dm-card); border-color:var(--dm-border); }
-    .qh-score { font-family:'Bebas Neue',cursive; font-size:1.8rem; color:var(--red); min-width:52px; }
-    .qh-info { flex:1; }
-    .qh-date { font-size:0.75rem; color:var(--muted); }
-    .qh-tier { font-size:0.82rem; font-weight:800; color:var(--ink); }
-    body.dark .qh-tier { color:var(--dm-text); }
-
-    /* SAFETY PLAN PREVIEW */
-    .plan-preview-card { background:white; border-radius:10px; padding:2rem; border:2px solid var(--border); }
-    body.dark .plan-preview-card { background:var(--dm-card); border-color:var(--dm-border); }
-    .plan-section-label { font-size:0.68rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--red); margin-bottom:0.4rem; margin-top:1rem; }
-    .plan-section-value { font-size:0.9rem; color:var(--ink); line-height:1.7; }
-    body.dark .plan-section-value { color:var(--dm-text); }
-
-    /* WELCOME CARD */
-    .welcome-card {
-      background:linear-gradient(135deg, #1a0a08, #2e1410);
-      border-radius:12px; padding:2rem; margin-bottom:2rem; position:relative; overflow:hidden;
+    .sidebar-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.35rem;
+      letter-spacing: 3px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .welcome-glow { position:absolute; width:250px; height:250px; border-radius:50%;
-      background:radial-gradient(circle,rgba(232,40,30,0.2),transparent 70%); top:-80px; right:-40px; }
-    .welcome-card h2 { font-family:'Bebas Neue',cursive; font-size:2rem; color:white; margin-bottom:0.3rem; position:relative; z-index:1; }
-    .welcome-card p  { font-size:0.9rem; color:rgba(255,255,255,0.6); position:relative; z-index:1; }
-    .welcome-card .role-badge { display:inline-flex; align-items:center; gap:0.4rem; padding:0.35rem 0.9rem;
-      background:rgba(255,255,255,0.12); border-radius:100px; font-size:0.75rem; font-weight:800;
-      color:rgba(255,255,255,0.8); margin-top:0.75rem; position:relative; z-index:1; }
-
-    /* QUICK ACTIONS */
-    .quick-actions { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:2rem; }
-    .quick-action {
-      background:white; border:2px solid var(--border); border-radius:10px; padding:1.5rem;
-      text-decoration:none; transition:all 0.3s; display:flex; flex-direction:column; gap:0.5rem;
+    .sidebar-logo-dot {
+      width: 22px; height: 22px;
+      background: var(--red);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; color: white; font-weight: 900;
+      flex-shrink: 0;
     }
-    body.dark .quick-action { background:var(--dm-card); border-color:var(--dm-border); }
-    .quick-action:hover { border-color:var(--red); transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
-    .quick-action .qa-icon { font-size:1.8rem; }
-    .quick-action .qa-title { font-weight:800; font-size:0.92rem; color:var(--dark); }
-    body.dark .quick-action .qa-title { color:var(--dm-text); }
-    .quick-action .qa-desc { font-size:0.78rem; color:var(--muted); line-height:1.5; }
+    .sidebar-sub {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.25rem;
+      padding-left: 30px;
+    }
 
-    .section-divider { font-size:0.72rem; font-weight:800; letter-spacing:2.5px; text-transform:uppercase; color:var(--red); margin-bottom:1rem; }
+    .sidebar-user {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .sidebar-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      font-weight: 800;
+      font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-user-info { overflow: hidden; }
+    .sidebar-user-email {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-user-role {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--red);
+    }
 
-    /* TOAST */
-    .dash-toast { position:fixed; bottom:2rem; right:2rem; background:var(--dark); color:white; padding:0.85rem 1.4rem;
-      border-radius:8px; font-size:0.88rem; font-weight:700; z-index:999; transform:translateY(120%);
-      transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
-    .dash-toast.show { transform:translateY(0); }
-    .dash-toast.ok   { background:var(--green); }
-    .dash-toast.err  { background:var(--red); }
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-section-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.9rem 1.2rem 0.4rem;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1.2rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+      gap: 0.5rem;
+      background: none;
+      border-top: none; border-right: none; border-bottom: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .nav-item.active {
+      color: var(--text);
+      background: rgba(232,40,30,0.08);
+      border-left-color: var(--red);
+    }
+    .nav-item-left { display: flex; align-items: center; gap: 0.6rem; }
+    .nav-item-icon { font-size: 0.9rem; opacity: 0.7; width: 16px; text-align: center; }
+    .nav-badge {
+      min-width: 20px; height: 20px;
+      background: var(--card);
+      color: var(--muted);
+      font-size: 0.65rem;
+      font-weight: 800;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px;
+      transition: all 0.2s;
+    }
+    .nav-badge.has-data { background: var(--red); color: white; }
+    .nav-badge.orange { background: var(--orange); color: white; }
+
+    .sidebar-footer {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+    .conn-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .conn-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s;
+    }
+    .conn-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .conn-dot.error { background: var(--red); }
+    .sidebar-footer-btns { display: flex; gap: 0.5rem; }
+    .btn-sm {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+    }
+    .btn-sm:hover { color: var(--text); border-color: var(--muted); }
+    .btn-sm.danger { border-color: rgba(232,40,30,0.3); color: var(--red); }
+    .btn-sm.danger:hover { background: rgba(232,40,30,0.1); }
+
+    /* ── MAIN ── */
+    #main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10,9,8,0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .topbar-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.4rem;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+    .topbar-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+    .uid-display {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      font-family: monospace;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .uid-display:hover { color: var(--text); }
+    .btn-topbar {
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .btn-topbar:hover { color: var(--text); border-color: var(--muted); }
+    .btn-topbar.danger { border-color: rgba(232,40,30,0.4); color: var(--red); background: rgba(232,40,30,0.06); }
+    .btn-topbar.danger:hover { background: rgba(232,40,30,0.15); }
+
+    /* ── NO-ACCESS BANNER ── */
+    #access-banner {
+      display: none;
+      background: linear-gradient(90deg, rgba(240,176,41,0.12), rgba(240,176,41,0.06));
+      border-bottom: 1px solid rgba(240,176,41,0.2);
+      padding: 0.75rem 2rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    #access-banner.show { display: flex; }
+    .access-banner-text {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--yellow);
+    }
+    .access-banner-text strong { font-weight: 800; }
+    .btn-show-rules {
+      padding: 0.4rem 1.1rem;
+      background: var(--yellow);
+      color: #1a1300;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-show-rules:hover { background: #e0a820; }
+
+    /* ── RULES MODAL ── */
+    #rules-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    #rules-modal.show { display: flex; }
+    .rules-modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .rules-modal-box h2 {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .rules-modal-box p { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.2rem; }
+    .rules-steps { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+    .rules-step {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: 1rem; background: var(--card); border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .rules-step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--red); color: white;
+      font-weight: 800; font-size: 0.8rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .rules-step-body h4 { font-size: 0.88rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .rules-step-body p { font-size: 0.8rem; color: var(--muted); margin: 0; }
+    .rules-step-body code {
+      display: block; margin-top: 0.5rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; padding: 0.5rem 0.75rem;
+      font-family: monospace; font-size: 0.8rem; color: var(--green);
+      word-break: break-all;
+    }
+    .rules-modal-close {
+      width: 100%; padding: 0.75rem;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: inherit;
+      font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .rules-modal-close:hover { border-color: var(--muted); }
+
+    /* ── CONTENT AREA ── */
+    #content { flex: 1; padding: 2rem; overflow-x: hidden; }
+
+    /* ── SECTION PANELS ── */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.2rem;
+      letter-spacing: 1px;
+      color: var(--text);
+      line-height: 1;
+    }
+    .page-header p { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+
+    /* ── STAT CARDS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: rgba(255,255,255,0.12); }
+    .stat-card-label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .stat-card-label .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .stat-card-num {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.8rem;
+      line-height: 1;
+      color: var(--text);
+    }
+    .stat-card-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ── TABLE ── */
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .table-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .table-count {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.2rem 0.6rem;
+    }
+    .filter-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .filter-tab {
+      padding: 0.35rem 0.9rem;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .filter-tab:hover { color: var(--text); }
+    .filter-tab.active { background: var(--red); color: white; border-color: var(--red); }
+
+    .data-table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead tr {
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      padding: 0.75rem 1.2rem;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.9rem 1.2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+      font-size: 0.82rem;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      border-radius: 100px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .badge-received   { background: rgba(120,120,120,0.15); color: #aaa; }
+    .badge-review     { background: rgba(240,176,41,0.15);  color: var(--yellow); }
+    .badge-escalated  { background: rgba(232,40,30,0.15);   color: var(--red); }
+    .badge-resolved   { background: rgba(26,158,110,0.15);  color: var(--green); }
+    .badge-anon       { background: rgba(255,255,255,0.06); color: var(--muted); }
+    .badge-named      { background: rgba(32,88,200,0.15);   color: #7aabff; }
+    .badge-critical   { background: rgba(232,40,30,0.2);    color: var(--red); border: 1px solid rgba(232,40,30,0.3); }
+    .badge-high       { background: rgba(240,176,41,0.15);  color: var(--yellow); }
+    .badge-medium     { background: rgba(240,112,48,0.15);  color: var(--orange); }
+    .badge-low        { background: rgba(120,120,120,0.1);  color: var(--muted); }
+
+    .ref-id {
+      font-family: monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* Status dropdown */
+    .status-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .status-select:focus { outline: none; border-color: var(--red); }
+    .status-select:hover { border-color: var(--muted); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+    .empty-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .empty-sub { font-size: 0.85rem; }
+
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--muted);
+    }
+    .spinner-large {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── DASHBOARD GRID ── */
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
+    .dash-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .dash-card h3 {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+    .recent-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .recent-item:last-child { border-bottom: none; }
+    .recent-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .ri-report  { background: rgba(232,40,30,0.15); }
+    .ri-evidence{ background: rgba(32,88,200,0.15); }
+    .ri-tip     { background: rgba(240,112,48,0.15); }
+    .ri-story   { background: rgba(26,158,110,0.15); }
+    .ri-pledge  { background: rgba(240,176,41,0.15); }
+    .recent-info { flex: 1; min-width: 0; }
+    .recent-title { font-size: 0.8rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-meta  { font-size: 0.7rem; color: var(--muted); }
+
+    /* Chart bar */
+    .chart-bar-row { display: flex; flex-direction: column; gap: 0.75rem; }
+    .chart-bar-item { display: flex; flex-direction: column; gap: 0.3rem; }
+    .chart-bar-label { display: flex; justify-content: space-between; font-size: 0.75rem; }
+    .chart-bar-label span:first-child { color: var(--text); font-weight: 700; }
+    .chart-bar-label span:last-child  { color: var(--muted); }
+    .chart-bar-track { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .chart-bar-fill  { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+    /* ── USERS TABLE ── */
+    .user-cell { display: flex; align-items: center; gap: 0.6rem; }
+    .user-av {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      font-weight: 800;
+      font-size: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .user-name { font-weight: 700; font-size: 0.82rem; }
+    .user-email { font-size: 0.72rem; color: var(--muted); }
+
+    /* ── STORIES ── */
+    .story-text-cell {
+      max-width: 320px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .approve-btn {
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid rgba(26,158,110,0.4);
+      background: rgba(26,158,110,0.1);
+      color: var(--green);
+    }
+    .approve-btn:hover { background: rgba(26,158,110,0.2); }
+    .approve-btn.approved {
+      border-color: var(--border);
+      background: var(--card);
+      color: var(--muted);
+      cursor: default;
+    }
+
+    /* ── TOAST ── */
+    .toast-wrap {
+      position: fixed;
+      top: 1rem; right: 1.5rem;
+      z-index: 9999;
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .toast {
+      padding: 0.75rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: white;
+      display: flex; align-items: center; gap: 0.6rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
+      max-width: 340px;
+    }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--blue); }
+    @keyframes toastIn  { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(110%); } }
+
+    /* ── AUTH SCREEN ── */
+    #auth-screen {
+      display: none;
+      position: fixed; inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    #auth-screen.show { display: flex; }
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+    }
+    .auth-box-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem;
+      letter-spacing: 3px;
+      color: var(--red);
+      margin-bottom: 1.5rem;
+    }
+    .auth-box h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .auth-box p { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.8rem; }
+    .auth-field { margin-bottom: 1rem; }
+    .auth-field label { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+    .auth-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { outline: none; border-color: var(--red); }
+    .auth-submit {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .auth-submit:hover { background: #c01e15; }
+    .auth-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .auth-error {
+      margin-top: 0.75rem;
+      padding: 0.7rem 1rem;
+      background: rgba(232,40,30,0.1);
+      border: 1px solid rgba(232,40,30,0.25);
+      border-radius: 6px;
+      color: var(--red);
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: none;
+    }
+    .auth-error.show { display: block; }
+    .auth-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .auth-submit.loading .auth-spinner { display: block; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #main { margin-left: 0; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav class="dash-nav">
-  <a href="../index.html" class="dash-logo">UN<span class="dot">&#9632;</span>SILENCED</a>
-  <div class="dash-nav-right">
-    <a href="../index.html" class="nav-home-link">&#8592; Main Site</a>
-    <div class="user-avatar" id="avatarInitial">?</div>
-    <span class="user-name-label" id="userNameLabel">Loading…</span>
-    <button class="signout-btn" onclick="doSignOut()">Sign Out</button>
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="show">
+  <div class="auth-box">
+    <div class="auth-box-logo">UN■SILENCED</div>
+    <h2>Admin Access</h2>
+    <p>Sign in with your administrator credentials to access the console.</p>
+    <div class="auth-field">
+      <label>Email Address</label>
+      <input class="auth-input" id="a-email" type="email" placeholder="admin@example.com" autocomplete="email"/>
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input class="auth-input" id="a-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="auth-submit" id="a-btn" onclick="adminLogin()">
+      <span class="auth-spinner" id="a-spin"></span>
+      <span id="a-btn-label">Sign In to Admin Console</span>
+    </button>
+    <div class="auth-error" id="a-err"></div>
   </div>
-</nav>
-
-<!-- LAYOUT -->
-<div class="dash-layout">
-
-  <!-- SIDEBAR -->
-  <aside class="dash-sidebar">
-    <p class="sidebar-section-lbl">Overview</p>
-    <button class="sidebar-link active" onclick="showPanel('home',this)"><span class="icon">&#127968;</span>Home</button>
-    <button class="sidebar-link" onclick="showPanel('reports',this)"><span class="icon">&#128203;</span>My Reports <span class="sidebar-badge" id="reportsBadge">0</span></button>
-
-    <p class="sidebar-section-lbl">My Tools</p>
-    <button class="sidebar-link" onclick="showPanel('safetyplan',this)"><span class="icon">&#128737;</span>Safety Plan</button>
-    <button class="sidebar-link" onclick="showPanel('quiz',this)"><span class="icon">&#129504;</span>Quiz History</button>
-
-    <p class="sidebar-section-lbl">Account</p>
-    <button class="sidebar-link" onclick="showPanel('profile',this)"><span class="icon">&#128100;</span>My Profile</button>
-    <button class="sidebar-link" onclick="showPanel('security',this)"><span class="icon">&#128274;</span>Security</button>
-
-    <p class="sidebar-section-lbl">Need Help?</p>
-    <a class="sidebar-link" href="tel:1930"><span class="icon">&#128222;</span>Call 1930</a>
-    <a class="sidebar-link" href="../index.html#report"><span class="icon">&#128193;</span>New Report</a>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="dash-main">
-
-    <!-- HOME PANEL -->
-    <div class="dash-panel active" id="panel-home">
-      <div class="welcome-card">
-        <div class="welcome-glow"></div>
-        <h2>Welcome back, <span id="welcomeName">there</span>!</h2>
-        <p id="welcomeEmail" style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-top:0.25rem"></p>
-        <div class="role-badge"><span id="welcomeRole">Loading…</span></div>
-      </div>
-
-      <div class="stat-row" id="homeStats">
-        <div class="stat-card"><div class="stat-card-num" id="statReports">0</div><div class="stat-card-lbl">Reports Filed</div></div>
-        <div class="stat-card"><div class="stat-card-num" id="statResolved">0</div><div class="stat-card-lbl">Resolved</div></div>
-        <div class="stat-card"><div class="stat-card-num" id="statQuiz">—</div><div class="stat-card-lbl">Best Quiz Score</div></div>
-        <div class="stat-card"><div class="stat-card-num" id="statDays">0</div><div class="stat-card-lbl">Days as Member</div></div>
-      </div>
-
-      <p class="section-divider">Quick Actions</p>
-      <div class="quick-actions">
-        <a href="../index.html#report" class="quick-action"><div class="qa-icon">&#128193;</div><div class="qa-title">File a Report</div><div class="qa-desc">Submit evidence, report an incident, or send an anonymous tip.</div></a>
-        <button class="quick-action" style="cursor:pointer;border:none;text-align:left" onclick="showPanel('safetyplan',null)"><div class="qa-icon">&#128737;</div><div class="qa-title">View Safety Plan</div><div class="qa-desc">Review or update your personal safety plan.</div></button>
-        <button class="quick-action" style="cursor:pointer;border:none;text-align:left" onclick="showPanel('reports',null)"><div class="qa-icon">&#128203;</div><div class="qa-title">My Reports</div><div class="qa-desc">Check the status of all reports you've submitted.</div></button>
-        <a href="../index.html#quiz" class="quick-action"><div class="qa-icon">&#127922;</div><div class="qa-title">Take the Quiz</div><div class="qa-desc">Test your cyberbullying awareness and track your score.</div></a>
-      </div>
-
-      <p class="section-divider">Emergency</p>
-      <div style="background:linear-gradient(90deg,#b01010,var(--red));border-radius:10px;padding:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-        <div><p style="font-weight:800;color:white;font-size:1rem">Need immediate help?</p><p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:0.2rem">Cyber Crime Helpline available 24/7 — free call.</p></div>
-        <a href="tel:1930" style="padding:0.75rem 1.5rem;background:white;color:var(--red);border-radius:8px;font-weight:800;font-size:0.9rem;text-decoration:none;">&#128222; Call 1930</a>
-      </div>
-    </div>
-
-    <!-- REPORTS PANEL -->
-    <div class="dash-panel" id="panel-reports">
-      <p class="panel-title">My Reports</p>
-      <p class="panel-sub">All reports and evidence submissions linked to your account.</p>
-      <div class="reports-table-wrap">
-        <table class="reports-table">
-          <thead><tr><th>Reference ID</th><th>Type</th><th>Submitted</th><th>Status</th></tr></thead>
-          <tbody id="reportsTableBody">
-            <tr><td colspan="4">
-              <div class="empty-state">
-                <div class="empty-icon">&#128203;</div>
-                <p>You haven't filed any reports yet.<br>When you do, they'll appear here with live status updates.</p>
-                <a href="../index.html#report" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--red);color:white;border-radius:8px;font-weight:800;font-size:0.85rem;text-decoration:none;">File Your First Report &rarr;</a>
-              </div>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- SAFETY PLAN PANEL -->
-    <div class="dash-panel" id="panel-safetyplan">
-      <p class="panel-title">My Safety Plan</p>
-      <p class="panel-sub">Your personal safety plan. <a href="../index.html#safety-plan" style="color:var(--red);font-weight:700">Edit on the main site &rarr;</a></p>
-      <div class="plan-preview-card" id="planPreviewCard">
-        <div class="empty-state">
-          <div class="empty-icon">&#128737;</div>
-          <p>You haven't built your safety plan yet.<br>It takes about 5 minutes and could make a real difference.</p>
-          <a href="../index.html#safety-plan" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--red);color:white;border-radius:8px;font-weight:800;font-size:0.85rem;text-decoration:none;">Build My Safety Plan &rarr;</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- QUIZ PANEL -->
-    <div class="dash-panel" id="panel-quiz">
-      <p class="panel-title">Quiz History</p>
-      <p class="panel-sub">Your past quiz results. <a href="../index.html#quiz" style="color:var(--red);font-weight:700">Take the quiz again &rarr;</a></p>
-      <div class="quiz-history-list" id="quizHistoryList">
-        <div class="empty-state" style="background:white;border-radius:10px;border:2px solid var(--border);">
-          <div class="empty-icon">&#129504;</div>
-          <p>No quiz attempts yet.<br>Take the 8-question awareness quiz to see your score here.</p>
-          <a href="../index.html#quiz" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--red);color:white;border-radius:8px;font-weight:800;font-size:0.85rem;text-decoration:none;">Take the Quiz &rarr;</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROFILE PANEL -->
-    <div class="dash-panel" id="panel-profile">
-      <p class="panel-title">My Profile</p>
-      <p class="panel-sub">Update your personal information.</p>
-      <div class="profile-card">
-        <p class="profile-card-title">Personal Information</p>
-        <div class="profile-grid">
-          <div class="p-field"><label class="p-lbl" for="pName">Full Name</label><input class="p-inp" type="text" id="pName"/></div>
-          <div class="p-field"><label class="p-lbl" for="pEmail">Email</label><input class="p-inp" type="email" id="pEmail" disabled/></div>
-          <div class="p-field"><label class="p-lbl" for="pRole">Role</label>
-            <select class="p-inp" id="pRole">
-              <option value="student">Student</option>
-              <option value="parent">Parent</option>
-              <option value="teacher">Teacher / Counsellor</option>
-              <option value="other">Other / Supporter</option>
-            </select>
-          </div>
-          <div class="p-field"><label class="p-lbl" for="pAge">Age Group</label>
-            <select class="p-inp" id="pAge">
-              <option value="under18">Under 18</option>
-              <option value="18-25">18 – 25</option>
-              <option value="25plus">25+</option>
-            </select>
-          </div>
-          <div class="p-field"><label class="p-lbl" for="pCity">City</label><input class="p-inp" type="text" id="pCity"/></div>
-          <div class="p-field"><label class="p-lbl" for="pState">State</label><input class="p-inp" type="text" id="pState"/></div>
-        </div>
-        <button class="save-btn" onclick="saveProfile()">Save Changes</button>
-      </div>
-    </div>
-
-    <!-- SECURITY PANEL -->
-    <div class="dash-panel" id="panel-security">
-      <p class="panel-title">Security</p>
-      <p class="panel-sub">Manage your account security settings.</p>
-      <div class="profile-card">
-        <p class="profile-card-title">Change Password</p>
-        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1.2rem;">A password reset link will be sent to your registered email address.</p>
-        <button class="save-btn" onclick="sendResetEmail()">Send Password Reset Email</button>
-      </div>
-      <div class="profile-card">
-        <p class="profile-card-title">Account Info</p>
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <div style="display:flex;justify-content:space-between;font-size:0.88rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-weight:700">Member since</span><span style="font-weight:800;color:var(--ink)" id="memberSince">—</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:0.88rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-weight:700">Last login</span><span style="font-weight:800;color:var(--ink)" id="lastLogin">—</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:0.88rem"><span style="color:var(--muted);font-weight:700">Account ID</span><span style="font-family:monospace;font-size:0.78rem;color:var(--muted)" id="accountId">—</span></div>
-        </div>
-      </div>
-      <div class="profile-card" style="border-color:rgba(232,40,30,0.3);">
-        <p class="profile-card-title" style="color:var(--red);">Danger Zone</p>
-        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:1.2rem;">Deleting your account is permanent and cannot be undone. All your data will be removed.</p>
-        <button class="danger-btn" onclick="confirmDelete()">Delete My Account</button>
-      </div>
-    </div>
-
-  </main>
 </div>
 
-<div class="dash-toast" id="dashToast"></div>
+<!-- RULES MODAL -->
+<div id="rules-modal">
+  <div class="rules-modal-box">
+    <h2>Firebase Rules Setup</h2>
+    <p>Your account needs admin role set in the database, and the correct security rules applied. Follow these steps:</p>
+    <div class="rules-steps">
+      <div class="rules-step">
+        <div class="rules-step-num">1</div>
+        <div class="rules-step-body">
+          <h4>Go to Firebase Console → Realtime Database → Rules</h4>
+          <p>Open <a href="https://console.firebase.google.com/project/cyberbullying-b861d/database/cyberbullying-b861d-default-rtdb/rules" target="_blank" style="color:var(--red)">Firebase Console</a> and click the Rules tab.</p>
+        </div>
+      </div>
+      <div class="rules-step">
+        <div class="rules-step-num">2</div>
+        <div class="rules-step-body">
+          <h4>Set your UID as admin in the database</h4>
+          <p>Go to Data tab, find or create <code>users / YOUR_UID / role</code> and set its value to <strong style="color:var(--green)">"admin"</strong>. Your UID:</p>
+          <code id="modal-uid-display">Sign in first to see your UID</code>
+        </div>
+      </div>
+      <div class="rules-step">
+        <div class="rules-step-num">3</div>
+        <div class="rules-step-body">
+          <h4>Paste these rules and click Publish</h4>
+          <p>Copy the rules from the <code>firebase-rules.json</code> file and paste into the Rules editor, then click Publish.</p>
+        </div>
+      </div>
+      <div class="rules-step">
+        <div class="rules-step-num">4</div>
+        <div class="rules-step-body">
+          <h4>Click Refresh in the admin panel</h4>
+          <p>Once rules are published and your role is set, click the Refresh button in the top bar to reload all data.</p>
+        </div>
+      </div>
+    </div>
+    <button class="rules-modal-close" onclick="closeRulesModal()">Got it — Close</button>
+  </div>
+</div>
 
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-dot">U</div>
+      UNSILENCED
+    </div>
+    <div class="sidebar-sub">Admin Console</div>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="sidebar-avatar" id="sb-avatar">?</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-email" id="sb-email">Loading…</div>
+      <div class="sidebar-user-role">Administrator</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" onclick="showPanel('dashboard')">
+      <span class="nav-item-left"><span class="nav-item-icon">◆</span> Dashboard</span>
+    </button>
+
+    <div class="nav-section-label">Users</div>
+    <button class="nav-item" onclick="showPanel('users')">
+      <span class="nav-item-left"><span class="nav-item-icon">○</span> Users</span>
+      <span class="nav-badge" id="badge-users">0</span>
+    </button>
+
+    <div class="nav-section-label">Reports</div>
+    <button class="nav-item" onclick="showPanel('incidents')">
+      <span class="nav-item-left"><span class="nav-item-icon">◇</span> Incidents</span>
+      <span class="nav-badge" id="badge-incidents">0</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('evidence')">
+      <span class="nav-item-left"><span class="nav-item-icon">◆</span> Evidence</span>
+      <span class="nav-badge" id="badge-evidence">0</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('tips')">
+      <span class="nav-item-left"><span class="nav-item-icon">○</span> Tips</span>
+      <span class="nav-badge" id="badge-tips">0</span>
+    </button>
+
+    <div class="nav-section-label">Community</div>
+    <button class="nav-item" onclick="showPanel('stories')">
+      <span class="nav-item-left"><span class="nav-item-icon">●</span> Stories</span>
+      <span class="nav-badge" id="badge-stories">0</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('pledges')">
+      <span class="nav-item-left"><span class="nav-item-icon">◐</span> Pledges</span>
+      <span class="nav-badge" id="badge-pledges">0</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('quiz')">
+      <span class="nav-item-left"><span class="nav-item-icon">◑</span> Quiz Results</span>
+      <span class="nav-badge" id="badge-quiz">0</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="conn-status">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label">Connecting…</span>
+    </div>
+    <div class="sidebar-footer-btns">
+      <button class="btn-sm" onclick="refreshAll()">↺ Refresh</button>
+      <button class="btn-sm danger" onclick="adminSignOut()">Sign Out</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-sub" id="topbar-sub">Overview of all activity</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="uid-display" id="uid-display" title="Click to copy UID" onclick="copyUID()">—</div>
+      <button class="btn-topbar" onclick="refreshAll()">↺ Refresh</button>
+      <button class="btn-topbar danger" onclick="adminSignOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- ACCESS BANNER -->
+  <div id="access-banner">
+    <div class="access-banner-text">
+      ⚠ <strong>Permission denied.</strong> Your admin role is not set in Firebase yet. Set <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px;">users/{uid}/role = "admin"</code> in the database and apply the security rules.
+    </div>
+    <button class="btn-show-rules" onclick="openRulesModal()">Show Setup Guide →</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p id="dash-load-status">Loading data…</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label"><div class="dot" style="background:#7aabff"></div> Registered Users</div>
+          <div class="stat-card-num" id="stat-users">—</div>
+          <div class="stat-card-sub">Total accounts created</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label"><div class="dot" style="background:var(--red)"></div> Total Reports</div>
+          <div class="stat-card-num" id="stat-reports">—</div>
+          <div class="stat-card-sub">Incidents + Evidence + Tips</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label"><div class="dot" style="background:var(--green)"></div> Total Pledges</div>
+          <div class="stat-card-num" id="stat-pledges">—</div>
+          <div class="stat-card-sub">Community commitments</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label"><div class="dot" style="background:var(--orange)"></div> Pending Stories</div>
+          <div class="stat-card-num" id="stat-pending">—</div>
+          <div class="stat-card-sub">Awaiting approval</div>
+        </div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="dash-card">
+          <h3>Recent Activity</h3>
+          <div id="recent-list"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+        </div>
+        <div class="dash-card">
+          <h3>Reports by Type</h3>
+          <div class="chart-bar-row" id="chart-types"><div class="loading-state"><div class="spinner-large"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="panel" id="panel-users">
+      <div class="page-header"><h1>Users</h1><p>All registered accounts</p></div>
+      <div class="table-header">
+        <div class="table-title">User Accounts <span class="table-count" id="users-count">0 total</span></div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="users-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+    <!-- INCIDENTS -->
+    <div class="panel" id="panel-incidents">
+      <div class="page-header"><h1>Incident Reports</h1><p>Submitted cyberbullying incident reports</p></div>
+      <div class="table-header">
+        <div class="table-title">Incidents <span class="table-count" id="incidents-count">0 total</span></div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterTable('incidents','all',this)">All</button>
+          <button class="filter-tab" onclick="filterTable('incidents','received',this)">Received</button>
+          <button class="filter-tab" onclick="filterTable('incidents','under_review',this)">Under Review</button>
+          <button class="filter-tab" onclick="filterTable('incidents','escalated',this)">Escalated</button>
+          <button class="filter-tab" onclick="filterTable('incidents','resolved',this)">Resolved</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="incidents-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+    <!-- EVIDENCE -->
+    <div class="panel" id="panel-evidence">
+      <div class="page-header"><h1>Evidence Uploads</h1><p>Uploaded screenshots and media files</p></div>
+      <div class="table-header">
+        <div class="table-title">Evidence <span class="table-count" id="evidence-count">0 total</span></div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterTable('evidence','all',this)">All</button>
+          <button class="filter-tab" onclick="filterTable('evidence','received',this)">Received</button>
+          <button class="filter-tab" onclick="filterTable('evidence','under_review',this)">Under Review</button>
+          <button class="filter-tab" onclick="filterTable('evidence','escalated',this)">Escalated</button>
+          <button class="filter-tab" onclick="filterTable('evidence','resolved',this)">Resolved</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="evidence-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="panel" id="panel-tips">
+      <div class="page-header"><h1>Anonymous Tips</h1><p>Confidential tips submitted by the public</p></div>
+      <div class="table-header">
+        <div class="table-title">Tips <span class="table-count" id="tips-count">0 total</span></div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterTable('tips','all',this)">All</button>
+          <button class="filter-tab" onclick="filterTable('tips','received',this)">Received</button>
+          <button class="filter-tab" onclick="filterTable('tips','under_review',this)">Under Review</button>
+          <button class="filter-tab" onclick="filterTable('tips','escalated',this)">Escalated</button>
+          <button class="filter-tab" onclick="filterTable('tips','resolved',this)">Resolved</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="tips-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+    <!-- STORIES -->
+    <div class="panel" id="panel-stories">
+      <div class="page-header"><h1>Community Stories</h1><p>Approve or reject submitted stories</p></div>
+      <div class="table-header">
+        <div class="table-title">Stories <span class="table-count" id="stories-count">0 total</span></div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterTable('stories','all',this)">All</button>
+          <button class="filter-tab" onclick="filterTable('stories','pending',this)">Pending</button>
+          <button class="filter-tab" onclick="filterTable('stories','approved',this)">Approved</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="stories-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+    <!-- PLEDGES -->
+    <div class="panel" id="panel-pledges">
+      <div class="page-header"><h1>Pledges</h1><p>People who took the anti-cyberbullying pledge</p></div>
+      <div class="table-header">
+        <div class="table-title">Pledges <span class="table-count" id="pledges-count">0 total</span></div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="pledges-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+    <!-- QUIZ RESULTS -->
+    <div class="panel" id="panel-quiz">
+      <div class="page-header"><h1>Quiz Results</h1><p>All quiz submissions and scores</p></div>
+      <div class="table-header">
+        <div class="table-title">Results <span class="table-count" id="quiz-count">0 total</span></div>
+      </div>
+      <div class="data-table-wrap">
+        <div id="quiz-table-body"><div class="loading-state"><div class="spinner-large"></div><p>Loading…</p></div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- Firebase SDK -->
 <script type="module">
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser }
-                            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp }
-                            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getDatabase, ref, get, update, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_FIREBASE_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID"
-};
+  const FIREBASE_CONFIG = {
+    apiKey:            'AIzaSyCBgZdbAG9o1s1BLaScgMMzA7e7InWaUfc',
+    authDomain:        'cyberbullying-b861d.firebaseapp.com',
+    databaseURL:       'https://cyberbullying-b861d-default-rtdb.firebaseio.com',
+    projectId:         'cyberbullying-b861d',
+    storageBucket:     'cyberbullying-b861d.firebasestorage.app',
+    messagingSenderId: '78205535176',
+    appId:             '1:78205535176:web:28f04d1d3587e49f6276fd'
+  };
 
-let auth, db, currentUser, demoMode = false;
-const DEMO_USER = { uid:"demo123", name:"Demo User", email:"demo@unsilenced.in",
-  role:"student", ageGroup:"under18", city:"Mumbai", state:"Maharashtra",
-  createdAt:{ toDate:()=>new Date(Date.now()-15*86400000) }, lastLogin:{ toDate:()=>new Date() } };
+  const app  = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
 
-try {
-  if (FIREBASE_CONFIG.apiKey === "YOUR_FIREBASE_API_KEY") throw new Error("demo");
-  const app = initializeApp(FIREBASE_CONFIG);
-  auth = getAuth(app); db = getFirestore(app);
-  onAuthStateChanged(auth, async user => {
-    if (!user) { window.location.href = "../auth/login.html"; return; }
-    currentUser = user;
-    const snap = await getDoc(doc(db,"users",user.uid));
-    const data = snap.exists() ? snap.data() : { name:user.displayName||"User", email:user.email, role:"other", ageGroup:"under18", city:"", state:"" };
-    loadDashboard(data);
-  });
-} catch(e) {
-  demoMode = true;
-  console.warn("Demo mode");
-  loadDashboard(DEMO_USER);
-}
+  // ── Expose to global scope ───────────────────────────────────
+  window._FB = { auth, db, ref, get, update, signInWithEmailAndPassword, signOut, onValue };
 
-// ── LOAD DASHBOARD ─────────────────────────────────────────
-function loadDashboard(data) {
-  const firstName = (data.name||"User").split(" ")[0];
-  const roleLabels = { student:"Student &#127890;", parent:"Parent &#128106;", teacher:"Teacher &#127979;", other:"Supporter &#128587;" };
+  // ── In-memory store ──────────────────────────────────────────
+  window._store = {
+    users: {}, incidents: {}, evidence: {}, tips: {},
+    stories: {}, pledges: {}, quiz: {}, meta: {}
+  };
 
-  // Nav
-  document.getElementById("avatarInitial").textContent = firstName[0].toUpperCase();
-  document.getElementById("userNameLabel").textContent = data.name || "User";
-  // Welcome card
-  document.getElementById("welcomeName").textContent = firstName;
-  document.getElementById("welcomeEmail").textContent = data.email || "";
-  document.getElementById("welcomeRole").innerHTML = roleLabels[data.role] || "User";
-  // Profile form
-  document.getElementById("pName").value  = data.name  || "";
-  document.getElementById("pEmail").value = data.email || "";
-  document.getElementById("pCity").value  = data.city  || "";
-  document.getElementById("pState").value = data.state || "";
-  if (data.role)     document.getElementById("pRole").value = data.role;
-  if (data.ageGroup) document.getElementById("pAge").value  = data.ageGroup;
-  // Security
-  if (data.createdAt?.toDate) document.getElementById("memberSince").textContent = data.createdAt.toDate().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
-  if (data.lastLogin?.toDate)  document.getElementById("lastLogin").textContent  = data.lastLogin.toDate().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
-  document.getElementById("accountId").textContent = (demoMode ? "demo123" : currentUser?.uid || "—").slice(0,12)+"…";
-  // Days as member
-  if (data.createdAt?.toDate) {
-    const days = Math.floor((Date.now()-data.createdAt.toDate())/(86400000));
-    document.getElementById("statDays").textContent = days;
-  }
-
-  // Load reports
-  loadReports(demoMode ? null : currentUser?.uid);
-}
-
-async function loadReports(uid) {
-  const tbody = document.getElementById("reportsTableBody");
-  if (!uid || demoMode) {
-    // Demo reports
-    const demo = [
-      { ref:"DEMO-4821", type:"Evidence", date:"2 Feb 2025", status:"reviewing" },
-      { ref:"DEMO-3394", type:"Incident Report", date:"18 Jan 2025", status:"resolved" },
-    ];
-    document.getElementById("reportsBadge").textContent = demo.length;
-    document.getElementById("statReports").textContent = demo.length;
-    document.getElementById("statResolved").textContent = demo.filter(r=>r.status==="resolved").length;
-    tbody.innerHTML = demo.map(r=>`
-      <tr>
-        <td><span class="ref-code">${r.ref}</span></td>
-        <td style="font-weight:700">${r.type}</td>
-        <td style="color:var(--muted)">${r.date}</td>
-        <td><span class="status-pill ${r.status}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span></td>
-      </tr>`).join("");
-    return;
-  }
-  try {
-    const collections = ["evidence","reports","tips"];
-    let allReports = [];
-    for (const col of collections) {
-      const q = query(collection(db, col), where("userId","==",uid));
-      const snap = await getDocs(q);
-      snap.forEach(d => allReports.push({...d.data(), id:d.id, colType:col}));
+  // ── Auth state listener ──────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      document.getElementById('auth-screen').classList.add('show');
+      setConnStatus(false, 'Not signed in');
+      return;
     }
-    document.getElementById("reportsBadge").textContent = allReports.length;
-    document.getElementById("statReports").textContent = allReports.length;
-    document.getElementById("statResolved").textContent = allReports.filter(r=>r.status==="resolved").length;
-    if (allReports.length === 0) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">&#128203;</div><p>No reports yet.</p><a href="../index.html#report" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--red);color:white;border-radius:8px;font-weight:800;font-size:0.85rem;text-decoration:none;">File Your First Report</a></div></td></tr>`; return; }
-    const typeMap = { evidence:"Evidence Upload", reports:"Incident Report", tips:"Anonymous Tip" };
-    tbody.innerHTML = allReports.map(r => {
-      const d = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString("en-IN") : "—";
-      const s = r.status || "received";
-      return `<tr><td><span class="ref-code">${r.referenceId||r.id.slice(0,8).toUpperCase()}</span></td><td style="font-weight:700">${typeMap[r.colType]||r.colType}</td><td style="color:var(--muted)">${d}</td><td><span class="status-pill ${s}">${s.charAt(0).toUpperCase()+s.slice(1)}</span></td></tr>`;
-    }).join("");
-  } catch(err) { console.error(err); }
-}
 
-// ── PANEL NAVIGATION ───────────────────────────────────────
-window.showPanel = function(name, btn) {
-  document.querySelectorAll(".dash-panel").forEach(p=>p.classList.remove("active"));
-  document.getElementById("panel-"+name).classList.add("active");
-  document.querySelectorAll(".sidebar-link").forEach(b=>b.classList.remove("active"));
-  if (btn) btn.classList.add("active");
-  window.scrollTo({top:0});
-};
+    // Populate UID display immediately (needed for setup guide)
+    document.getElementById('uid-display').textContent = 'UID: ' + user.uid.slice(0,16) + '…';
+    document.getElementById('uid-display').dataset.uid = user.uid;
+    document.getElementById('modal-uid-display').textContent = user.uid;
 
-// ── SIGN OUT ───────────────────────────────────────────────
-window.doSignOut = async function() {
-  if (demoMode) { window.location.href = "../auth/login.html"; return; }
-  await signOut(auth);
-  window.location.href = "../auth/login.html";
-};
+    setConnStatus(null, 'Checking role…');
+    updateDashStatus('Verifying admin access…');
 
-// ── SAVE PROFILE ───────────────────────────────────────────
-window.saveProfile = async function() {
-  if (demoMode) { toast("Profile saved (demo mode)", "ok"); return; }
-  try {
-    await updateDoc(doc(db,"users",currentUser.uid), {
-      name:  document.getElementById("pName").value.trim(),
-      role:  document.getElementById("pRole").value,
-      ageGroup: document.getElementById("pAge").value,
-      city:  document.getElementById("pCity").value.trim(),
-      state: document.getElementById("pState").value.trim(),
+    // ── STEP 1: Try to read the user's own role from RTDB ──────
+    let userRole = null;
+    try {
+      const snap = await get(ref(db, 'users/' + user.uid + '/role'));
+      userRole = snap.exists() ? snap.val() : null;
+    } catch(e) {
+      // PERMISSION_DENIED means rules block the read — role not set yet
+      userRole = null;
+    }
+
+    // ── STEP 2: If no role set, write 'admin' to this user's own record ──
+    // The rules allow users to write their own node, so this works without
+    // existing admin access. First-time setup only.
+    if (!userRole) {
+      try {
+        await update(ref(db, 'users/' + user.uid), {
+          email:     user.email,
+          name:      user.displayName || user.email.split('@')[0],
+          role:      'admin',
+          uid:       user.uid,
+          createdAt: Date.now()
+        });
+        userRole = 'admin';
+        showToast('Admin role granted to your account.', 'success');
+      } catch(e) {
+        // Could not write — rules may block it
+        showToast('Could not set admin role: ' + e.message, 'error');
+      }
+    }
+
+    // ── STEP 3: Only proceed if role is 'admin' ────────────────
+    if (userRole !== 'admin') {
+      document.getElementById('auth-screen').classList.add('show');
+      const errEl = document.getElementById('a-err');
+      errEl.textContent = 'Access denied. Your account (UID: ' + user.uid.slice(0,12) + '…) does not have admin role. Contact the site owner.';
+      errEl.classList.add('show');
+      setConnStatus(false, 'Access denied');
+      await signOut(auth);
+      return;
+    }
+
+    // ── Admin confirmed — show dashboard ──────────────────────
+    document.getElementById('auth-screen').classList.remove('show');
+    const name = user.displayName || user.email.split('@')[0];
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sb-avatar').textContent = initials;
+    document.getElementById('sb-email').textContent  = user.email;
+
+    setConnStatus(null, 'Loading data…');
+    await loadAllData(user);
+  });
+
+  // ── Login ────────────────────────────────────────────────────
+  window.adminLogin = async () => {
+    const email = document.getElementById('a-email').value.trim();
+    const pass  = document.getElementById('a-pass').value;
+    const btn   = document.getElementById('a-btn');
+    const err   = document.getElementById('a-err');
+    const spin  = document.getElementById('a-spin');
+    if (!email || !pass) { showErr(err, 'Please enter email and password.'); return; }
+    btn.disabled = true;
+    spin.style.display = 'block';
+    document.getElementById('a-btn-label').textContent = 'Signing in…';
+    err.classList.remove('show');
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (e) {
+      const msgs = {
+        'auth/invalid-credential':    'Incorrect email or password.',
+        'auth/user-not-found':        'No account found with this email.',
+        'auth/wrong-password':        'Incorrect password.',
+        'auth/too-many-requests':     'Too many attempts. Wait a moment.',
+        'auth/network-request-failed':'Network error. Check connection.'
+      };
+      showErr(err, msgs[e.code] || 'Sign in failed: ' + e.message);
+      btn.disabled = false;
+      spin.style.display = 'none';
+      document.getElementById('a-btn-label').textContent = 'Sign In to Admin Console';
+    }
+  };
+  document.getElementById('a-pass').addEventListener('keydown', e => { if (e.key==='Enter') window.adminLogin(); });
+
+  function showErr(el, msg) { el.textContent = msg; el.classList.add('show'); }
+
+  // ── Sign Out ─────────────────────────────────────────────────
+  window.adminSignOut = async () => {
+    await signOut(auth);
+    window.location.reload();
+  };
+
+  // ── Load All Data ────────────────────────────────────────────
+  async function loadAllData(user) {
+    const collections = ['users','reports','evidence','tips','stories','pledges','quiz_results','meta'];
+    let loaded = 0;
+    let permErrors = [];
+
+    updateDashStatus(`Loading… (0/${collections.length})`);
+
+    // Load sequentially to avoid Firebase rate-limiting, and log each result
+    for (const col of collections) {
+      try {
+        const snap = await get(ref(db, col));
+        const val  = snap.exists() ? snap.val() : {};
+        loaded++;
+        updateDashStatus(`Loading… (${loaded}/${collections.length})`);
+        // Map collection names to store keys
+        if      (col === 'reports')      window._store.incidents = val || {};
+        else if (col === 'quiz_results') window._store.quiz      = val || {};
+        else                             window._store[col]      = val || {};
+        console.log(`✓ Loaded ${col}:`, Object.keys(val||{}).length, 'records');
+      } catch (e) {
+        console.error(`✗ Failed to load ${col}:`, e.code, e.message);
+        // Keep empty — don't let one failure kill everything
+        if      (col === 'reports')      window._store.incidents = {};
+        else if (col === 'quiz_results') window._store.quiz      = {};
+        else                             window._store[col]      = {};
+        if (e.code === 'PERMISSION_DENIED' || (e.message||'').toLowerCase().includes('permission')) {
+          permErrors.push(col);
+        }
+      }
+    }
+
+    if (permErrors.length > 0) {
+      document.getElementById('access-banner').classList.add('show');
+      setConnStatus(false, `Permission denied on: ${permErrors.join(', ')}`);
+      console.warn('Permission denied on collections:', permErrors);
+      console.warn('Ensure Firebase rules are published and your user role is "admin" in RTDB.');
+    } else {
+      document.getElementById('access-banner').classList.remove('show');
+      setConnStatus(true, 'Connected');
+    }
+
+    updateDashStatus(`Last loaded: ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}`);
+    renderAll();
+  }
+
+  // ── Refresh ──────────────────────────────────────────────────
+  window.refreshAll = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    setConnStatus(null, 'Refreshing…');
+    updateDashStatus('Refreshing…');
+    await loadAllData(user);
+    showToast('Data refreshed', 'success');
+  };
+
+  // ── Render All ───────────────────────────────────────────────
+  function renderAll() {
+    renderDashboard();
+    renderUsers();
+    renderIncidents();
+    renderEvidence();
+    renderTips();
+    renderStories();
+    renderPledges();
+    renderQuiz();
+    updateBadges();
+  }
+
+  // ── Badges ───────────────────────────────────────────────────
+  function updateBadges() {
+    const s = window._store;
+    const count = obj => Object.keys(obj || {}).length;
+    setBadge('users',     count(s.users));
+    setBadge('incidents', count(s.incidents));
+    setBadge('evidence',  count(s.evidence));
+    setBadge('tips',      count(s.tips));
+    setBadge('stories',   count(s.stories));
+    setBadge('pledges',   count(s.pledges));
+    setBadge('quiz',      count(s.quiz));
+  }
+  function setBadge(id, n) {
+    const el = document.getElementById('badge-' + id);
+    if (!el) return;
+    el.textContent = n;
+    el.className = 'nav-badge' + (n > 0 ? ' has-data' : '');
+  }
+
+  // ── DASHBOARD ────────────────────────────────────────────────
+  function renderDashboard() {
+    const s = window._store;
+    const count = obj => Object.keys(obj || {}).length;
+    const incCount  = count(s.incidents);
+    const evCount   = count(s.evidence);
+    const tipCount  = count(s.tips);
+    const total     = incCount + evCount + tipCount;
+    const pending   = Object.values(s.stories || {}).filter(x => !x.approved).length;
+
+    document.getElementById('stat-users').textContent   = count(s.users);
+    document.getElementById('stat-reports').textContent = total;
+    document.getElementById('stat-pledges').textContent = count(s.pledges);
+    document.getElementById('stat-pending').textContent = pending;
+
+    // Recent activity
+    const recent = [];
+    Object.entries(s.incidents || {}).forEach(([k,v]) => recent.push({type:'report', data:v, key:k}));
+    Object.entries(s.evidence  || {}).forEach(([k,v]) => recent.push({type:'evidence', data:v, key:k}));
+    Object.entries(s.tips      || {}).forEach(([k,v]) => recent.push({type:'tip', data:v, key:k}));
+    Object.entries(s.stories   || {}).forEach(([k,v]) => recent.push({type:'story', data:v, key:k}));
+    Object.entries(s.pledges   || {}).forEach(([k,v]) => recent.push({type:'pledge', data:v, key:k}));
+    recent.sort((a,b) => (b.data.createdAt||0) - (a.data.createdAt||0));
+    const top = recent.slice(0, 6);
+
+    const typeMap = {
+      report:   {icon:'⚑', cls:'ri-report',   label:'Incident Report'},
+      evidence: {icon:'📸', cls:'ri-evidence', label:'Evidence Upload'},
+      tip:      {icon:'💬', cls:'ri-tip',      label:'Anonymous Tip'},
+      story:    {icon:'✍', cls:'ri-story',    label:'Story Submission'},
+      pledge:   {icon:'✊', cls:'ri-pledge',   label:'Pledge'}
+    };
+
+    const list = document.getElementById('recent-list');
+    if (!top.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">No activity yet</div><div class="empty-sub">Reports and submissions will appear here</div></div>';
+      return;
+    }
+    list.innerHTML = top.map(item => {
+      const t = typeMap[item.type];
+      const d = item.data;
+      const date = d.createdAt ? fmtDate(d.createdAt) : '—';
+      const title = d.referenceId || d.name || d.author || 'Entry';
+      const sub = d.incidentType || d.description?.slice(0,40) || item.type;
+      return `<div class="recent-item">
+        <div class="recent-icon ${t.cls}">${t.icon}</div>
+        <div class="recent-info">
+          <div class="recent-title">${esc(String(title))}</div>
+          <div class="recent-meta">${t.label} · ${esc(String(sub).slice(0,35))}${String(sub).length > 35 ? '…' : ''}</div>
+        </div>
+        <div style="font-size:0.7rem;color:var(--muted);white-space:nowrap">${date}</div>
+      </div>`;
+    }).join('');
+
+    // Chart: report types
+    const typeCounts = {};
+    Object.values(s.incidents || {}).forEach(v => {
+      const t = v.incidentType || 'other';
+      typeCounts[t] = (typeCounts[t] || 0) + 1;
     });
-    toast("Profile updated successfully", "ok");
-    document.getElementById("userNameLabel").textContent = document.getElementById("pName").value.trim();
-  } catch(err) { toast("Could not save profile", "err"); }
-};
+    const sorted = Object.entries(typeCounts).sort((a,b) => b[1]-a[1]);
+    const maxVal = sorted[0]?.[1] || 1;
+    const colours = ['#e8281e','#f07030','#f0b429','#2058c8','#1a9e6e','#9b59b6'];
+    const chart = document.getElementById('chart-types');
+    if (!sorted.length) {
+      chart.innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-sub">No incidents yet</div></div>';
+      return;
+    }
+    chart.innerHTML = sorted.map(([type, cnt], i) => `
+      <div class="chart-bar-item">
+        <div class="chart-bar-label">
+          <span>${esc(type.replace(/_/g,' '))}</span>
+          <span>${cnt}</span>
+        </div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" style="width:${(cnt/maxVal*100)}%;background:${colours[i%colours.length]}"></div>
+        </div>
+      </div>
+    `).join('');
+  }
 
-// ── SEND RESET ─────────────────────────────────────────────
-window.sendResetEmail = async function() {
-  if (demoMode) { toast("Reset email sent (demo mode)", "ok"); return; }
-  try {
-    await sendPasswordResetEmail(auth, currentUser.email);
-    toast("Reset link sent to " + currentUser.email, "ok");
-  } catch(err) { toast("Could not send reset email", "err"); }
-};
+  // ── USERS ────────────────────────────────────────────────────
+  function renderUsers() {
+    const users = window._store.users || {};
+    const arr   = Object.entries(users);
+    const body  = document.getElementById('users-table-body');
+    document.getElementById('users-count').textContent = arr.length + ' total';
 
-// ── DELETE ACCOUNT ─────────────────────────────────────────
-window.confirmDelete = function() {
-  if (!confirm("Are you absolutely sure? This will permanently delete your account and all your data. This cannot be undone.")) return;
-  if (demoMode) { toast("Account deleted (demo mode)", "ok"); return; }
-  deleteUser(currentUser)
-    .then(() => { window.location.href = "../index.html"; })
-    .catch(err => { toast("Could not delete — please sign in again first.", "err"); });
-};
+    if (!arr.length) {
+      body.innerHTML = empty('👤', 'No users yet', 'Registered users will appear here');
+      return;
+    }
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th>User</th><th>Role</th><th>Age Group</th><th>City</th>
+        <th>Reports</th><th>Quiz Best</th><th>Joined</th>
+      </tr></thead>
+      <tbody>${arr.map(([uid, u]) => {
+        const init = (u.name || u.email || '?').slice(0,2).toUpperCase();
+        return `<tr>
+          <td><div class="user-cell">
+            <div class="user-av">${init}</div>
+            <div><div class="user-name">${esc(u.name||'—')}</div><div class="user-email">${esc(u.email||uid.slice(0,12))}</div></div>
+          </div></td>
+          <td><span class="badge badge-named">${esc(u.role||'—')}</span></td>
+          <td>${esc(u.ageGroup||'—')}</td>
+          <td>${esc(u.city||'—')}</td>
+          <td>${u.reportCount||0}</td>
+          <td>${u.quizBestScore != null ? u.quizBestScore + '/8' : '—'}</td>
+          <td style="white-space:nowrap;color:var(--muted)">${u.createdAt ? fmtDate(u.createdAt) : '—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }
 
-// ── TOAST ──────────────────────────────────────────────────
-window.toast = function(msg, type="") {
-  const t = document.getElementById("dashToast");
-  t.textContent = msg;
-  t.className = "dash-toast show " + type;
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove("show"), 3500);
-};
+  // ── INCIDENTS ────────────────────────────────────────────────
+  window._filters = {};
+  function renderIncidents(filter) {
+    filter = filter || window._filters.incidents || 'all';
+    window._filters.incidents = filter;
+    const items = window._store.incidents || {};
+    let arr = Object.entries(items);
+    if (filter !== 'all') arr = arr.filter(([,v]) => v.status === filter);
+    arr.sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+    const body = document.getElementById('incidents-table-body');
+    document.getElementById('incidents-count').textContent = Object.keys(items).length + ' total';
+    if (!arr.length) { body.innerHTML = empty('📋','No incidents found',''); return; }
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th>Ref ID</th><th>Type</th><th>Platform</th>
+        <th>Description</th><th>Anon</th><th>Status</th><th>Date</th><th>Update</th>
+      </tr></thead>
+      <tbody>${arr.map(([key, v]) => `<tr>
+        <td><span class="ref-id">${esc(v.referenceId||key.slice(0,8))}</span></td>
+        <td>${esc((v.incidentType||'—').replace(/_/g,' '))}</td>
+        <td>${esc(v.platform||'—')}</td>
+        <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)">${esc((v.description||'—').slice(0,60))}</td>
+        <td><span class="badge ${v.isAnonymous?'badge-anon':'badge-named'}">${v.isAnonymous?'Anon':'Named'}</span></td>
+        <td>${statusBadge(v.status)}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${v.createdAt?fmtDate(v.createdAt):'—'}</td>
+        <td><select class="status-select" onchange="updateStatus('reports','${key}',this.value)">
+          ${statusOptions(v.status)}
+        </select></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── EVIDENCE ─────────────────────────────────────────────────
+  // Cloudinary cloud name for building thumbnail URLs
+  const CLOUD = 'delwuljga';
+  function buildThumb(file) {
+    if (!file) return null;
+    if (file.publicId) {
+      // Build URL using c_fill per Cloudinary docs
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/c_fill,w_80,h_60,q_auto,f_auto/${file.publicId}`;
+    }
+    return file.thumbnail || file.url || null;
+  }
+  function buildFull(file) {
+    if (!file) return null;
+    if (file.publicId) {
+      return `https://res.cloudinary.com/${CLOUD}/image/upload/q_auto,f_auto/${file.publicId}`;
+    }
+    return file.url || null;
+  }
+  function evidenceFilesHtml(v) {
+    // files can be: array of objects, object (keyed), or array of strings (legacy)
+    let files = [];
+    if (v.files) {
+      if (Array.isArray(v.files)) {
+        files = v.files;
+      } else if (typeof v.files === 'object') {
+        files = Object.values(v.files);
+      }
+    }
+    if (!files.length) return `<span style="color:var(--muted);font-size:0.75rem">${v.fileCount||0} file(s)</span>`;
+    // Show up to 3 thumbnails
+    const thumbs = files.slice(0, 3).map(f => {
+      if (typeof f === 'string') {
+        // Legacy: just a URL string — display as img
+        return `<a href="${f}" target="_blank"><img src="${f}" style="width:50px;height:38px;object-fit:cover;border-radius:4px;border:1px solid var(--border)" title="View file"/></a>`;
+      }
+      if (f && f.resourceType === 'video') {
+        return `<a href="${f.url||'#'}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:50px;height:38px;background:rgba(255,255,255,0.05);border-radius:4px;border:1px solid var(--border);font-size:1.3rem" title="Video file">▶</a>`;
+      }
+      const thumb = buildThumb(f);
+      const full  = buildFull(f);
+      if (!thumb) return `<span style="display:inline-block;width:50px;height:38px;background:rgba(255,255,255,0.05);border-radius:4px;border:1px solid var(--border);font-size:1.3rem;text-align:center;line-height:38px">📄</span>`;
+      return `<a href="${full}" target="_blank"><img src="${thumb}" style="width:50px;height:38px;object-fit:cover;border-radius:4px;border:1px solid var(--border);cursor:zoom-in" title="View file" onerror="this.style.display='none'"/></a>`;
+    });
+    const extra = files.length > 3 ? `<span style="font-size:0.7rem;color:var(--muted);align-self:center">+${files.length-3}</span>` : '';
+    return `<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">${thumbs.join('')}${extra}</div>`;
+  }
+
+  function renderEvidence(filter) {
+    filter = filter || window._filters.evidence || 'all';
+    window._filters.evidence = filter;
+    const items = window._store.evidence || {};
+    let arr = Object.entries(items);
+    if (filter !== 'all') arr = arr.filter(([,v]) => v.status === filter);
+    arr.sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+    const body = document.getElementById('evidence-table-body');
+    document.getElementById('evidence-count').textContent = Object.keys(items).length + ' total';
+    if (!arr.length) { body.innerHTML = empty('📸','No evidence uploads',''); return; }
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th>Ref ID</th><th>Images</th><th>Description</th>
+        <th>Anonymous</th><th>Status</th><th>Date</th><th>Update</th>
+      </tr></thead>
+      <tbody>${arr.map(([key, v]) => `<tr>
+        <td><span class="ref-id">${esc(v.referenceId||key.slice(0,8))}</span></td>
+        <td>${evidenceFilesHtml(v)}</td>
+        <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)">${esc((v.description||'—').slice(0,60))}</td>
+        <td><span class="badge ${v.isAnonymous?'badge-anon':'badge-named'}">${v.isAnonymous?'Anon':'Named'}</span></td>
+        <td>${statusBadge(v.status)}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${v.createdAt?fmtDate(v.createdAt):'—'}</td>
+        <td><select class="status-select" onchange="updateStatus('evidence','${key}',this.value)">
+          ${statusOptions(v.status)}
+        </select></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── TIPS ─────────────────────────────────────────────────────
+  function renderTips(filter) {
+    filter = filter || window._filters.tips || 'all';
+    window._filters.tips = filter;
+    const items = window._store.tips || {};
+    let arr = Object.entries(items);
+    if (filter !== 'all') arr = arr.filter(([,v]) => v.status === filter);
+    arr.sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+    const body = document.getElementById('tips-table-body');
+    document.getElementById('tips-count').textContent = Object.keys(items).length + ' total';
+    if (!arr.length) { body.innerHTML = empty('💬','No tips submitted',''); return; }
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th>Ref ID</th><th>Urgency</th><th>Description</th><th>Status</th><th>Date</th><th>Update</th>
+      </tr></thead>
+      <tbody>${arr.map(([key, v]) => `<tr>
+        <td><span class="ref-id">${esc(v.referenceId||key.slice(0,8))}</span></td>
+        <td><span class="badge badge-${v.urgency||'low'}">${esc(v.urgency||'low')}</span></td>
+        <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)">${esc((v.description||'—').slice(0,80))}</td>
+        <td>${statusBadge(v.status)}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${v.createdAt?fmtDate(v.createdAt):'—'}</td>
+        <td><select class="status-select" onchange="updateStatus('tips','${key}',this.value)">
+          ${statusOptions(v.status)}
+        </select></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── STORIES ──────────────────────────────────────────────────
+  function renderStories(filter) {
+    filter = filter || window._filters.stories || 'all';
+    window._filters.stories = filter;
+    const items = window._store.stories || {};
+    let arr = Object.entries(items);
+    if (filter === 'pending')  arr = arr.filter(([,v]) => !v.approved);
+    if (filter === 'approved') arr = arr.filter(([,v]) =>  v.approved);
+    arr.sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+    const body = document.getElementById('stories-table-body');
+    document.getElementById('stories-count').textContent = Object.keys(items).length + ' total';
+    if (!arr.length) { body.innerHTML = empty('✍','No stories yet',''); return; }
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th>Author</th><th>Tag</th><th>Story</th><th>Location</th><th>Likes</th><th>Status</th><th>Date</th><th>Action</th>
+      </tr></thead>
+      <tbody>${arr.map(([key, v]) => `<tr>
+        <td style="font-weight:700">${esc(v.author||'Anonymous')}</td>
+        <td><span class="badge badge-named">${esc(v.tag||'—')}</span></td>
+        <td class="story-text-cell">${esc((v.text||'').slice(0,80))}${(v.text||'').length>80?'…':''}</td>
+        <td style="color:var(--muted)">${esc(v.location||'—')}</td>
+        <td>♥ ${v.likes||0}</td>
+        <td><span class="badge ${v.approved?'badge-resolved':'badge-review'}">${v.approved?'Approved':'Pending'}</span></td>
+        <td style="white-space:nowrap;color:var(--muted)">${v.createdAt?fmtDate(v.createdAt):'—'}</td>
+        <td><button class="approve-btn ${v.approved?'approved':''}" onclick="approveStory('${key}',${!v.approved})" ${v.approved?'disabled':''}>
+          ${v.approved?'✓ Approved':'Approve'}
+        </button></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── PLEDGES ──────────────────────────────────────────────────
+  function renderPledges() {
+    const items = window._store.pledges || {};
+    const arr   = Object.entries(items).sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0));
+    const body  = document.getElementById('pledges-table-body');
+    document.getElementById('pledges-count').textContent = arr.length + ' total';
+    if (!arr.length) { body.innerHTML = empty('✊','No pledges yet',''); return; }
+    body.innerHTML = `<table>
+      <thead><tr><th>Name</th><th>Date</th></tr></thead>
+      <tbody>${arr.map(([,v]) => `<tr>
+        <td style="font-weight:700">${esc(v.name||'Anonymous')}</td>
+        <td style="color:var(--muted)">${v.createdAt?fmtDate(v.createdAt):'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── QUIZ ─────────────────────────────────────────────────────
+  function renderQuiz() {
+    const items = window._store.quiz || {};
+    const arr   = Object.entries(items).sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0));
+    const body  = document.getElementById('quiz-table-body');
+    document.getElementById('quiz-count').textContent = arr.length + ' total';
+    if (!arr.length) { body.innerHTML = empty('🎯','No quiz results yet',''); return; }
+    body.innerHTML = `<table>
+      <thead><tr><th>Score</th><th>%</th><th>Tier</th><th>Date</th></tr></thead>
+      <tbody>${arr.map(([,v]) => `<tr>
+        <td style="font-weight:800;font-size:1rem">${v.score||0} / ${v.total||8}</td>
+        <td><span class="badge ${v.percentage>=85?'badge-resolved':v.percentage>=60?'badge-review':'badge-escalated'}">${v.percentage||0}%</span></td>
+        <td style="color:var(--muted)">${esc(v.tier||'—')}</td>
+        <td style="color:var(--muted)">${v.createdAt?fmtDate(v.createdAt):'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ── STATUS UPDATE ────────────────────────────────────────────
+  window.updateStatus = async (collection, key, newStatus) => {
+    try {
+      await update(ref(db, `${collection}/${key}`), { status: newStatus, updatedAt: Date.now() });
+      if (window._store[collection === 'reports' ? 'incidents' : collection][key]) {
+        (window._store[collection === 'reports' ? 'incidents' : collection][key]).status = newStatus;
+      }
+      showToast(`Status updated to ${newStatus}`, 'success');
+    } catch (e) {
+      showToast('Update failed: ' + e.message, 'error');
+    }
+  };
+
+  // ── APPROVE STORY ────────────────────────────────────────────
+  window.approveStory = async (key, approved) => {
+    try {
+      await update(ref(db, `stories/${key}`), { approved, updatedAt: Date.now() });
+      if (window._store.stories[key]) window._store.stories[key].approved = approved;
+      renderStories();
+      showToast(approved ? 'Story approved and published' : 'Story unapproved', 'success');
+    } catch (e) {
+      showToast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  // ── FILTER ───────────────────────────────────────────────────
+  window.filterTable = (section, filter, btn) => {
+    btn.closest('.filter-tabs').querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const fnMap = {
+      incidents: renderIncidents,
+      evidence:  renderEvidence,
+      tips:      renderTips,
+      stories:   renderStories
+    };
+    if (fnMap[section]) fnMap[section](filter);
+  };
+
+  // ── PANEL NAV ────────────────────────────────────────────────
+  const panelMeta = {
+    dashboard: { title: 'Dashboard',        sub: 'Overview of all activity' },
+    users:     { title: 'Users',            sub: 'All registered accounts' },
+    incidents: { title: 'Incident Reports', sub: 'Cyberbullying reports submitted' },
+    evidence:  { title: 'Evidence Uploads', sub: 'Uploaded screenshots and media' },
+    tips:      { title: 'Anonymous Tips',   sub: 'Confidential tips from the public' },
+    stories:   { title: 'Community Stories',sub: 'Approve or reject submissions' },
+    pledges:   { title: 'Pledges',          sub: 'Anti-cyberbullying commitments' },
+    quiz:      { title: 'Quiz Results',     sub: 'All quiz submissions and scores' }
+  };
+
+  window.showPanel = (name) => {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-' + name)?.classList.add('active');
+    document.querySelector(`[onclick="showPanel('${name}')"]`)?.classList.add('active');
+    const meta = panelMeta[name] || {};
+    document.getElementById('topbar-title').textContent = meta.title || name;
+    document.getElementById('topbar-sub').textContent   = meta.sub || '';
+  };
+
+  // ── HELPERS ──────────────────────────────────────────────────
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  }
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function empty(icon, title, sub) {
+    return `<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+  }
+  function statusBadge(s) {
+    const m = { received:'badge-received', under_review:'badge-review', escalated:'badge-escalated', resolved:'badge-resolved' };
+    const l = { received:'Received', under_review:'Under Review', escalated:'Escalated', resolved:'Resolved' };
+    return `<span class="badge ${m[s]||'badge-received'}">${l[s]||s||'Received'}</span>`;
+  }
+  function statusOptions(current) {
+    return ['received','under_review','escalated','resolved'].map(s =>
+      `<option value="${s}" ${s===current?'selected':''}>${{received:'Received',under_review:'Under Review',escalated:'Escalated',resolved:'Resolved'}[s]}</option>`
+    ).join('');
+  }
+  function setConnStatus(ok, label) {
+    const dot = document.getElementById('conn-dot');
+    const lbl = document.getElementById('conn-label');
+    dot.className = 'conn-dot' + (ok === true ? ' connected' : ok === false ? ' error' : '');
+    lbl.textContent = label;
+  }
+  function updateDashStatus(msg) {
+    const el = document.getElementById('dash-load-status');
+    if (el) el.textContent = msg;
+    const sub = document.getElementById('topbar-sub');
+    if (sub && document.getElementById('panel-dashboard').classList.contains('active')) sub.textContent = msg;
+  }
+
+  // ── COPY UID ─────────────────────────────────────────────────
+  window.copyUID = () => {
+    const uid = document.getElementById('uid-display').dataset.uid;
+    if (!uid) return;
+    navigator.clipboard.writeText(uid).then(() => showToast('UID copied to clipboard', 'info'));
+  };
+
+  // ── TOAST ────────────────────────────────────────────────────
+  window.showToast = (msg, type) => {
+    type = type || 'info';
+    const wrap = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success:'✓', error:'✕', info:'ℹ' };
+    t.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 4200);
+  };
+
+  // ── RULES MODAL ──────────────────────────────────────────────
+  window.openRulesModal = () => document.getElementById('rules-modal').classList.add('show');
+  window.closeRulesModal = () => document.getElementById('rules-modal').classList.remove('show');
+  document.getElementById('rules-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('rules-modal')) window.closeRulesModal();
+  });
 </script>
 </body>
 </html>

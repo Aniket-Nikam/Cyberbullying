@@ -2,20 +2,6 @@
 //  UNSILENCED — Main App (Firebase Realtime DB integrated)
 // ============================================================
 
-// ── DARK MODE ────────────────────────────────────────────────
-(function initDarkMode() {
-  if (localStorage.getItem('unsilenced-dark') === 'true') {
-    document.body.classList.add('dark');
-    document.getElementById('darkToggle')?.classList.add('on');
-  }
-})();
-
-function toggleDark() {
-  const isDark = document.body.classList.toggle('dark');
-  document.getElementById('darkToggle')?.classList.toggle('on', isDark);
-  localStorage.setItem('unsilenced-dark', isDark);
-}
-
 // ── TOAST ────────────────────────────────────────────────────
 function showToast(message, type, duration) {
   type     = type || 'success';
@@ -100,7 +86,7 @@ function handleFiles(files) {
     const rb = document.createElement('button'); rb.className = 'remove-file'; rb.innerHTML = '×';
     rb.onclick = () => { uploadedFiles = uploadedFiles.filter(f => f !== file); item.remove(); };
     item.appendChild(rb);
-    document.getElementById('uploadedFiles').appendChild(item);
+    (document.getElementById('uploadedFiles') || document.querySelector('.uploaded-files-grid'))?.appendChild(item);
     uploadToCloudinary(file, pct => {
       const bar = item.querySelector('.upload-progress-fill');
       const lbl = item.querySelector('.upload-progress-label');
@@ -135,7 +121,7 @@ document.getElementById('uploadForm')?.addEventListener('submit', async e => {
       type: 'evidence',
       description: document.getElementById('uploadDesc').value,
       isAnonymous: document.getElementById('uploadAnon').checked,
-      files: uploadedUrls.map(u => u.url),
+      files: uploadedUrls,  // full Cloudinary objects: { url, publicId, thumbnail, format, bytes, resourceType }
       fileCount: uploadedFiles.length,
       uid: getLoggedInUID()
     });
@@ -262,12 +248,13 @@ async function submitPledge() {
       // Increment counter
       const snap = await window._db.read('meta/pledgeCount');
       const newCount = (snap || 12847) + 1;
-      await window._db.write('meta/pledgeCount', newCount);
+      await window._db.setPrimitive('meta/pledgeCount', newCount);
       pledgeCount = newCount;
     } catch(e) { pledgeCount++; }
   } else { pledgeCount++; }
 
-  document.getElementById('pledgeCounter').textContent = pledgeCount.toLocaleString('en-IN');
+  const _pEls = [document.getElementById('pledgeCounter'), document.getElementById('pledgeCounterBig')];
+  _pEls.forEach(el => { if (el) el.textContent = pledgeCount.toLocaleString('en-IN'); });
   const chip = document.createElement('span');
   chip.className = 'pledge-chip';
   chip.textContent = name;

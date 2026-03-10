@@ -24,8 +24,7 @@ async function initAuth() {
       if (user) {
         await loadUserProfile(user.uid);
         renderNavLoggedIn(user);
-        if (!user.emailVerified) showVerifyBanner();
-        else hideVerifyBanner();
+        // Email verification: don't auto-show banner — user verifies at their own pace
       } else {
         authUserProfile = null;
         renderNavGuest();
@@ -288,9 +287,22 @@ function renderNavLoggedIn(user) {
   gEl.style.display = 'none';
   uEl.style.display = 'flex';
   uEl.innerHTML =
-    '<a class="nav-avatar-circle" href="dashboard/index.html" title="My Dashboard">' + initials + '</a>' +
-    '<a class="nav-user-name" href="dashboard/index.html">' + name.split(' ')[0] + '</a>' +
+    '<a class="nav-avatar-circle" href="#user-session" title="My Profile" onclick="openUserSession(event)">' + initials + '</a>' +
+    '<a class="nav-user-name" href="#user-session" onclick="openUserSession(event)">' + name.split(' ')[0] + '</a>' +
     '<button class="nav-signout-btn" onclick="signOut()">Sign out</button>';
+  // Update mobile nav auth section too
+  const mobileAuth = document.getElementById('mobile-nav-auth-guest');
+  if (mobileAuth) {
+    mobileAuth.innerHTML =
+      '<span style="font-size:0.8rem;font-weight:700;color:var(--ink)">' + name.split(' ')[0] + '</span>' +
+      '<button onclick="closeMobileNav();signOut()" style="background:none;border:1px solid #ccc;border-radius:6px;padding:0.4rem 0.8rem;cursor:pointer;font-size:0.8rem">Sign Out</button>';
+  }
+  // Persist session info in sessionStorage for use on page reload
+  try {
+    sessionStorage.setItem('_us_name', name);
+    sessionStorage.setItem('_us_email', user.email);
+    sessionStorage.setItem('_us_uid',   user.uid);
+  } catch(e) {}
 }
 function renderNavGuest() {
   const gEl = document.getElementById('nav-guest');
@@ -298,11 +310,22 @@ function renderNavGuest() {
   if (!gEl || !uEl) return;
   gEl.style.display = 'flex';
   uEl.style.display = 'none';
+  try {
+    sessionStorage.removeItem('_us_name');
+    sessionStorage.removeItem('_us_email');
+    sessionStorage.removeItem('_us_uid');
+  } catch(e) {}
 }
 
 // ── VERIFY BANNER ─────────────────────────────────────────────
-function showVerifyBanner() { document.getElementById('verify-banner')?.classList.add('show'); }
-function hideVerifyBanner() { document.getElementById('verify-banner')?.classList.remove('show'); }
+function showVerifyBanner() {
+  const b = document.getElementById('verify-banner');
+  if (b) b.style.display = 'flex';
+}
+function hideVerifyBanner() {
+  const b = document.getElementById('verify-banner');
+  if (b) b.style.display = 'none';
+}
 async function resendVerification() {
   if (!authUser) return;
   try {
@@ -319,6 +342,48 @@ function togglePasswordVisibility(inputId, btnEl) {
   input.type  = isHidden ? 'text' : 'password';
   btnEl.textContent = isHidden ? '🙈' : '👁';
 }
+
+
+// ── USER SESSION PANEL ────────────────────────────────────────
+function openUserSession(e) {
+  if (e) e.preventDefault();
+  // Show a simple dropdown with user info and links
+  const existing = document.getElementById('user-session-dropdown');
+  if (existing) { existing.remove(); return; }
+  const user   = window._auth?.firebaseAuth?.currentUser;
+  const profile = authUserProfile;
+  if (!user) return;
+  const name     = user.displayName || user.email.split('@')[0];
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const dd = document.createElement('div');
+  dd.id = 'user-session-dropdown';
+  dd.style.cssText = 'position:fixed;top:64px;right:1.5rem;z-index:500;background:white;border:1px solid #e0dcd5;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.12);min-width:260px;overflow:hidden;animation:fadeSlideDown 0.18s ease;font-family:Nunito Sans,sans-serif';
+  dd.innerHTML = `
+    <div style="padding:1rem 1.2rem;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:0.75rem">
+      <div style="width:40px;height:40px;border-radius:50%;background:#e8281e;color:white;font-weight:800;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
+      <div>
+        <div style="font-weight:800;font-size:0.9rem;color:#1a1814">${name}</div>
+        <div style="font-size:0.75rem;color:#7a766e">${user.email}</div>
+        ${profile?.role ? '<div style="font-size:0.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#e8281e;margin-top:2px">' + profile.role + '</div>' : ''}
+      </div>
+    </div>
+    <div style="padding:0.5rem 0">
+      ${profile?.reportCount ? '<div style="padding:0.5rem 1.2rem;font-size:0.8rem;color:#7a766e">Reports submitted: <strong style=color:#1a1814>' + profile.reportCount + '</strong></div>' : ''}
+      ${profile?.city ? '<div style="padding:0.2rem 1.2rem;font-size:0.8rem;color:#7a766e">City: <strong style=color:#1a1814>' + profile.city + '</strong></div>' : ''}
+      ${profile?.quizBestScore != null ? '<div style="padding:0.2rem 1.2rem;font-size:0.8rem;color:#7a766e">Quiz best: <strong style=color:#1a1814>' + profile.quizBestScore + '/8</strong></div>' : ''}
+    </div>
+    <div style="padding:0.5rem 0;border-top:1px solid #f0ede8">
+      <button onclick="document.getElementById('user-session-dropdown').remove();signOut()" style="width:100%;padding:0.7rem 1.2rem;text-align:left;background:none;border:none;cursor:pointer;font-size:0.85rem;font-weight:700;color:#e8281e;font-family:inherit">Sign Out</button>
+    </div>`;
+  document.body.appendChild(dd);
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closer(ev) {
+      if (!dd.contains(ev.target)) { dd.remove(); document.removeEventListener('click', closer); }
+    });
+  }, 50);
+}
+window.openUserSession = openUserSession;
 
 // ── EVENTS ───────────────────────────────────────────────────
 document.getElementById('auth-overlay')?.addEventListener('click', function(e) {

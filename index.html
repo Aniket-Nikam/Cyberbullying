@@ -9,11 +9,19 @@
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/features.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
+<style>
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Mobile nav toggle uses flex/none via JS - ensure it's hidden on desktop */
+@media (min-width: 901px) { .mobile-nav { display: none !important; } }
+</style>
 </head>
 <body>
 
 <!-- EMAIL VERIFY BANNER -->
-<div id="verify-banner">
+<div id="verify-banner" style="display:none">
   <span>📧 Please verify your email to unlock all features.</span>
   <div style="display:flex;gap:0.75rem;align-items:center">
     <button class="verify-resend-btn" onclick="resendVerification()">Resend Email</button>
@@ -188,8 +196,7 @@
       <a href="dashboard/index.html" id="nav-username" style="font-size:0.82rem;font-weight:700;color:var(--ink);text-decoration:none;">Dashboard</a>
     </div>
     <div class="dark-toggle-wrap">
-      <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode"></button>
-    </div>
+      </div>
   </div>
 </nav>
 

@@ -20,7 +20,6 @@
   animation: authSlideUp 0.38s cubic-bezier(0.34,1.56,0.64,1);
   position: relative;
 }
-body.dark .auth-modal { background: #1e1c18; }
 
 @keyframes authSlideUp {
   from { transform: translateY(40px) scale(0.97); opacity: 0; }
@@ -39,12 +38,12 @@ body.dark .auth-modal { background: #1e1c18; }
   color: var(--muted); transition: all 0.2s;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-body.dark .auth-close { background: #2a2820; }
+
 .auth-close:hover { background: var(--red); color: white; }
 
 .auth-title-block { padding: 1.2rem 2rem 0; }
 .auth-title { font-family: 'Bebas Neue',cursive; font-size: 2.4rem; line-height: 1; color: var(--dark); margin-bottom: 0.4rem; }
-body.dark .auth-title { color: var(--dm-text); }
+
 .auth-subtitle { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
 
 /* ── STEP INDICATOR ── */
@@ -56,11 +55,11 @@ body.dark .auth-title { color: var(--dm-text); }
   font-size: 0.72rem; font-weight: 800; transition: all 0.3s;
   border: 2px solid var(--border); background: white; color: var(--muted);
 }
-body.dark .auth-step-dot { background: #14120f; border-color: #3a3730; }
+
 .auth-step-dot.active { border-color: var(--red); background: var(--red); color: white; }
 .auth-step-dot.done { border-color: var(--green); background: var(--green); color: white; }
 .auth-step-line { flex: 1; height: 2px; background: var(--border); transition: background 0.3s; margin: 0 4px; }
-body.dark .auth-step-line { background: #3a3730; }
+
 .auth-step-line.done { background: var(--green); }
 .auth-step-labels { display: flex; padding: 0.4rem 2rem 0; }
 .auth-step-label-item { flex: 1; text-align: center; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); transition: color 0.3s; }
@@ -71,7 +70,6 @@ body.dark .auth-step-line { background: #3a3730; }
 .auth-body { padding: 1.4rem 2rem 2rem; }
 .auth-form-group { margin-bottom: 1.1rem; }
 .auth-label { display: block; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.5px; color: var(--ink); margin-bottom: 0.4rem; text-transform: uppercase; }
-body.dark .auth-label { color: var(--dm-text); }
 
 .auth-input-wrap { position: relative; }
 .auth-input {
@@ -81,7 +79,7 @@ body.dark .auth-label { color: var(--dm-text); }
   color: var(--ink); background: white;
   transition: border-color 0.25s, box-shadow 0.25s; box-sizing: border-box;
 }
-body.dark .auth-input { background: #14120f; border-color: #3a3730; color: var(--dm-text); }
+
 .auth-input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(232,40,30,0.1); }
 .auth-input.valid { border-color: var(--green); }
 .auth-input.invalid { border-color: var(--red); }
@@ -107,7 +105,7 @@ body.dark .auth-input { background: #14120f; border-color: #3a3730; color: var(-
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238c8880' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 1rem center;
 }
-body.dark .auth-select { background-color: #14120f; border-color: #3a3730; color: var(--dm-text); }
+
 .auth-select:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(232,40,30,0.1); }
 
 /* ── ROLE CARDS ── */
@@ -117,18 +115,18 @@ body.dark .auth-select { background-color: #14120f; border-color: #3a3730; color
   padding: 0.85rem 0.5rem; border: 2px solid var(--border); border-radius: 10px;
   text-align: center; cursor: pointer; transition: all 0.2s; background: white;
 }
-body.dark .role-card { background: #14120f; border-color: #3a3730; }
+
 .role-card:hover { border-color: var(--red); transform: translateY(-2px); }
 .role-card.selected { border-color: var(--red); background: var(--red-soft); }
 .role-card-icon { font-size: 1.6rem; display: block; margin-bottom: 0.35rem; }
 .role-card-label { font-size: 0.72rem; font-weight: 800; color: var(--ink); text-transform: uppercase; letter-spacing: 0.3px; }
-body.dark .role-card-label { color: var(--dm-text); }
+
 .role-card.selected .role-card-label { color: var(--red); }
 
 /* ── PASSWORD STRENGTH ── */
 .password-strength { margin-top: 0.5rem; }
 .strength-bar { height: 4px; background: var(--light); border-radius: 2px; overflow: hidden; margin-bottom: 0.3rem; }
-body.dark .strength-bar { background: #3a3730; }
+
 .strength-fill { height: 100%; border-radius: 2px; transition: width 0.4s, background 0.4s; width: 0%; }
 .strength-label { font-size: 0.73rem; font-weight: 700; }
 .strength-weak   .strength-fill { width: 33%;  background: var(--red); }
@@ -140,7 +138,7 @@ body.dark .strength-bar { background: #3a3730; }
 
 /* ── TERMS ── */
 .auth-terms { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: var(--off); border-radius: 8px; margin-bottom: 1.2rem; }
-body.dark .auth-terms { background: #14120f; }
+
 .auth-terms input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; margin-top: 2px; }
 .auth-terms-label { font-size: 0.83rem; color: var(--muted); line-height: 1.55; cursor: pointer; }
 .auth-terms-label a { color: var(--red); font-weight: 700; text-decoration: none; }
@@ -161,7 +159,7 @@ body.dark .auth-terms { background: #14120f; }
 /* ── DIVIDER ── */
 .auth-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1rem 0; }
 .auth-divider-line { flex: 1; height: 1px; background: var(--border); }
-body.dark .auth-divider-line { background: #3a3730; }
+
 .auth-divider-text { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
 
 /* ── ALERT ── */
@@ -173,7 +171,7 @@ body.dark .auth-divider-line { background: #3a3730; }
 
 /* ── SWITCH ── */
 .auth-switch { text-align: center; padding-top: 1.2rem; border-top: 1px solid var(--border); margin-top: 1.2rem; font-size: 0.88rem; color: var(--muted); }
-body.dark .auth-switch { border-color: #3a3730; }
+
 .auth-switch-btn { background: none; border: none; color: var(--red); font-weight: 800; font-size: 0.88rem; cursor: pointer; padding: 0; text-decoration: underline; }
 .auth-switch-btn:hover { opacity: 0.75; }
 
@@ -185,7 +183,7 @@ body.dark .auth-switch { border-color: #3a3730; }
 .auth-success-screen.show { display: block; animation: fadeIn 0.5s; }
 .auth-success-icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
 .auth-success-title { font-family: 'Bebas Neue',cursive; font-size: 2.2rem; color: var(--dark); margin-bottom: 0.5rem; }
-body.dark .auth-success-title { color: var(--dm-text); }
+
 .auth-success-sub { font-size: 0.92rem; color: var(--muted); line-height: 1.6; max-width: 340px; margin: 0 auto 1.5rem; }
 
 /* ── EMAIL VERIFY BANNER ── */
@@ -209,7 +207,7 @@ body.dark .auth-success-title { color: var(--dm-text); }
 }
 .nav-avatar-circle:hover { transform: scale(1.1); border-color: rgba(232,40,30,0.3); }
 .nav-user-name { font-size: 0.82rem; font-weight: 700; color: var(--ink); text-decoration: none; transition: color 0.2s; }
-body.dark .nav-user-name { color: var(--dm-text); }
+
 .nav-user-name:hover { color: var(--red); }
 .nav-signout-btn { background: none; border: none; font-size: 0.78rem; font-weight: 700; color: var(--muted); cursor: pointer; padding: 0; transition: color 0.2s; }
 .nav-signout-btn:hover { color: var(--red); }

@@ -209,6 +209,13 @@ function showQuizResults() {
   document.getElementById('quiz-results-message').textContent = message;
   document.getElementById('quiz-progress-fill').style.width = '100%';
   document.getElementById('quiz-results').classList.add('show');
+  // Save to Firebase if logged in
+  try {
+    const uid = window._auth?.firebaseAuth?.currentUser?.uid || null;
+    if (window._db && typeof window._db.saveQuizResult === 'function') {
+      window._db.saveQuizResult(uid, score, total, tier).catch(()=>{});
+    }
+  } catch(e) {}
 }
 
 /* ── DIGITAL SAFETY SCORE ─────────────────────────────────── */
@@ -270,11 +277,17 @@ function updateSafetyScore() {
 }
 
 /* ── PLATFORM GUIDE ───────────────────────────────────────── */
-function switchPlatformTab(platform) {
-  document.querySelectorAll('.platform-tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.platform-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`[data-platform="${platform}"]`).classList.add('active');
-  document.getElementById(`platform-${platform}`).classList.add('active');
+function switchPlatformTab(platform, btn) {
+  // Support both old and new HTML structure
+  document.querySelectorAll('.platform-tab-btn, .platform-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.platform-panel, .platform-steps').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const byOld = document.getElementById('platform-' + platform);
+  const byNew = document.getElementById('pt-' + platform);
+  if (byOld) byOld.classList.add('active');
+  if (byNew) byNew.classList.add('active');
+  const oldBtn = document.querySelector('[data-platform="' + platform + '"]');
+  if (oldBtn) oldBtn.classList.add('active');
 }
 
 /* ── STORIES WALL ─────────────────────────────────────────── */
@@ -315,12 +328,13 @@ function renderStories() {
   });
 }
 
-function likeStory(i) {
-  const btn = document.getElementById(`like-${i}`);
-  if (btn.classList.contains('liked')) return;
+function likeStoryByIndex(i) {
+  const btn = document.getElementById('like-' + i);
+  if (!btn || btn.classList.contains('liked')) return;
   btn.classList.add('liked');
   storyLikes[i]++;
-  document.getElementById(`like-count-${i}`).textContent = storyLikes[i];
+  const countEl = document.getElementById('like-count-' + i);
+  if (countEl) countEl.textContent = storyLikes[i];
 }
 
 // Submit a story
@@ -450,14 +464,21 @@ function downloadResource(name) {
 
 /* ── INIT ALL FEATURES ────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  renderStories();
-  initQuiz();
-  updateSafetyScore();
-
-  // Init safety score checkboxes
-  SAFETY_CHECKS.forEach(c => {
-    document.getElementById(c.id)?.addEventListener('change', updateSafetyScore);
-  });
+  // Render stories if the old grid exists
+  if (document.getElementById('stories-grid')) renderStories();
+  // Init quiz overlay
+  if (document.getElementById('quiz-start-overlay')) {
+    // Quiz is initialized on demand via startQuiz()
+  } else {
+    // Old-style quiz card — init immediately
+    if (typeof initQuiz === 'function' && document.getElementById('quiz-options')) initQuiz();
+  }
+  if (typeof updateSafetyScore === 'function') {
+    updateSafetyScore();
+    SAFETY_CHECKS && SAFETY_CHECKS.forEach(c => {
+      document.getElementById(c.id)?.addEventListener('change', updateSafetyScore);
+    });
+  }
 });
 
 // Close modals on backdrop click
