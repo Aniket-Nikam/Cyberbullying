@@ -2,7 +2,7 @@
 //  UNSILENCED — Firebase + Cloudinary Configuration
 //  Firebase Project  : cyberbullying-b861d
 //  Cloudinary Cloud  : delwuljga
-//  Upload Preset     : unsilenced_unsigned  (Unsigned)
+//  Upload Preset     : ml_default  (must be Unsigned in dashboard)
 //  Folder            : unsilenced-evidence
 // ============================================================
 
@@ -19,11 +19,11 @@ const FIREBASE_CONFIG = {
 };
 
 // ── CLOUDINARY ────────────────────────────────────────────────
-//  Upload Preset: unsilenced_unsigned (Unsigned, no API secret needed)
-//  Setup: cloudinary.com → Settings → Upload → Upload Presets → Add preset
-//    Name: unsilenced_unsigned | Signing mode: Unsigned | Folder: unsilenced-evidence
+//  Upload Preset: ml_default (must be set to Unsigned in Cloudinary dashboard)
+//  Cloud: delwuljga | API Key: 512793948514589
+//  ⚠️  In Cloudinary: Settings → Upload → Upload Presets → ml_default → set Signing Mode to Unsigned
 const CLOUD_NAME    = 'delwuljga';
-const UPLOAD_PRESET = 'unsilenced_unsigned';
+const UPLOAD_PRESET = 'ml_default';
 const UPLOAD_FOLDER = 'unsilenced-evidence';
 
 // URL builder — matches Cloudinary SDK c_fill pattern from official docs
@@ -44,8 +44,8 @@ const cld = {
     w = w || 200; h = h || 200;
     return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/c_fill,w_${w},h_${h},q_auto/${publicId}.jpg`;
   },
-  uploadUrl()      { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`; },
-  videoUploadUrl() { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`; }
+  uploadUrl()      { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; }, // auto = handles any file type
+  videoUploadUrl() { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; }  // auto handles video too
 };
 const CLOUDINARY_CONFIG = cld; // alias for backwards compat
 
@@ -212,8 +212,10 @@ function _getDemoStatus(refId) {
 //  Unsigned upload — POST to /v1_1/{cloud}/image/upload with upload_preset
 //  Returns full object including publicId for building delivery URLs with cld.*
 async function uploadToCloudinary(file, onProgress) {
-  const isVideo  = file.type.startsWith('video/');
-  const endpoint = isVideo ? cld.videoUploadUrl() : cld.uploadUrl();
+  const isVideo = file.type.startsWith('video/');
+  // Always use /auto/upload — Cloudinary detects image/video/raw automatically.
+  // Using /image/upload for non-images returns HTTP 400 "Invalid image file".
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
   const fd = new FormData();
   fd.append('file',          file);
@@ -249,7 +251,16 @@ async function uploadToCloudinary(file, onProgress) {
         });
       } else {
         let msg = `Upload failed (HTTP ${xhr.status})`;
-        try { msg = JSON.parse(xhr.responseText).error?.message || msg; } catch {}
+        let raw = xhr.responseText;
+        try {
+          const parsed = JSON.parse(raw);
+          msg = parsed.error?.message || msg;
+          // Common causes:
+          // "Upload preset not found" → preset name wrong or not created yet
+          // "Invalid image file"      → use /auto/upload instead of /image/upload
+          // "Must supply api_key"     → preset is Signed, not Unsigned
+        } catch {}
+        console.error('Cloudinary upload error:', msg, '| Response:', raw);
         reject(new Error(msg));
       }
     };
