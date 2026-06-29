@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNSILENCED — User Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --red:        #e8281e;
+      --red-soft:   #fff0ef;
+      --orange:     #f07030;
+      --green:      #1a9e6e;
+      --green-soft: #e6f7f1;
+      --blue:       #2058c8;
+      --blue-soft:  #edf2ff;
+      --white:      #ffffff;
+      --off:        #faf9f7;
+      --light:      #f2f0ec;
+      --border:     #e4e1db;
+      --muted:      #8c8880;
+      --dark:       #1a1814;
+      --ink:        #2e2c28;
+    }
+
+    body {
+      background: var(--off);
+      color: var(--ink);
+      font-family: 'Nunito Sans', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      padding-top: 80px;
+    }
+
+    /* Navbar */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 5vw;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 1px 0 var(--border), 0 8px 24px rgba(0,0,0,0.04);
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.55rem; letter-spacing: 4px; color: var(--dark);
+      text-decoration: none; display: flex; align-items: center; gap: 0.2rem;
+    }
+    .nav-logo .dot { color: var(--red); }
+    .btn-nav {
+      font-size: 0.8rem; font-weight: 800; color: var(--muted);
+      text-decoration: none; padding: 0.5rem 1rem; border-radius: 6px;
+      transition: all 0.2s; border: none; background: none; cursor: pointer;
+    }
+    .btn-nav:hover { color: var(--dark); background: var(--light); }
+    .btn-nav.active { color: white; background: var(--dark); }
+
+    /* Layout */
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar Profile Card */
+    .profile-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+      align-self: start;
+    }
+    .avatar {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .profile-name { font-size: 1.25rem; font-weight: 800; color: var(--dark); margin-bottom: 0.25rem; }
+    .profile-email { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.2rem; word-break: break-all; }
+    .profile-badges { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .badge {
+      font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 0.25rem 0.65rem; border-radius: 100px;
+    }
+    .badge-role { background: var(--blue-soft); color: var(--blue); }
+    .badge-age  { background: var(--green-soft); color: var(--green); }
+    
+    .profile-details {
+      border-top: 1px solid var(--border);
+      padding-top: 1.2rem;
+      text-align: left;
+      display: flex; flex-direction: column; gap: 0.6rem;
+      font-size: 0.85rem;
+    }
+    .detail-item { display: flex; justify-content: space-between; color: var(--muted); }
+    .detail-item strong { color: var(--dark); }
+
+    /* Content Area */
+    .main-content {
+      display: flex; flex-direction: column; gap: 2rem;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+    .card-title { font-size: 1.1rem; font-weight: 800; color: var(--dark); }
+
+    /* Report List */
+    .report-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 0; border-bottom: 1px solid var(--light);
+      gap: 1rem;
+    }
+    .report-item:last-child { border-bottom: none; }
+    .report-info { flex: 1; }
+    .report-ref { font-family: monospace; font-weight: 700; font-size: 0.9rem; color: var(--dark); }
+    .report-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+    
+    /* Status Badge mapping */
+    .status-tag {
+      font-size: 0.72rem; font-weight: 800; padding: 0.3rem 0.75rem; border-radius: 100px;
+    }
+    .status-received { background: rgba(140, 140, 140, 0.12); color: #777; }
+    .status-under_review { background: rgba(240, 112, 48, 0.12); color: var(--orange); }
+    .status-escalated { background: rgba(232, 40, 30, 0.12); color: var(--red); }
+    .status-resolved { background: rgba(26, 158, 110, 0.12); color: var(--green); }
+
+    /* Safety Plan Layout */
+    .plan-sheet {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      background: #fffdfa;
+      position: relative;
+    }
+    .plan-field { margin-bottom: 1.2rem; }
+    .plan-field:last-child { margin-bottom: 0; }
+    .plan-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); }
+    .plan-value { font-size: 0.92rem; color: var(--dark); font-weight: 700; margin-top: 0.15rem; }
+    
+    .plan-contacts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.3rem; }
+    @media (max-width: 480px) { .plan-contacts { grid-template-columns: 1fr; } }
+    .contact-bubble { background: var(--off); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1rem; }
+    .contact-bubble-name { font-weight: 800; font-size: 0.85rem; color: var(--dark); }
+    .contact-bubble-phone { font-size: 0.78rem; color: var(--muted); font-family: monospace; }
+
+    .print-btn {
+      background: var(--dark); color: white; border: none; border-radius: 6px;
+      padding: 0.5rem 1rem; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s;
+    }
+    .print-btn:hover { background: #333; }
+
+    /* Empty states */
+    .empty-state { text-align: center; padding: 2rem 1rem; color: var(--muted); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .empty-title { font-weight: 800; color: var(--dark); font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .empty-sub { font-size: 0.8rem; }
+    .empty-cta {
+      display: inline-block; background: var(--red); color: white; text-decoration: none;
+      padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: 800; font-size: 0.8rem; margin-top: 1rem;
+    }
+    .empty-cta:hover { background: #c01e15; }
+
+    /* Toast overlay */
+    .toast-wrap {
+      position: fixed; top: 1rem; right: 1.5rem; z-index: 9999;
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .toast {
+      padding: 0.75rem 1.2rem; border-radius: 8px; font-size: 0.82rem; font-weight: 700;
+      color: white; display: flex; align-items: center; gap: 0.6rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
+    }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    .toast.info    { background: var(--blue); }
+    @keyframes toastIn  { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(110%); } }
+
+    /* Demo Mode Banner */
+    #demo-banner {
+      display: none;
+      background: var(--orange);
+      color: white;
+      text-align: center;
+      padding: 0.5rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      position: fixed;
+      top: 66px; left: 0; right: 0;
+      z-index: 400;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="../index.html" class="nav-logo">UN<span class="dot">■</span>SILENCED</a>
+  <div style="display:flex;gap:0.75rem;align-items:center">
+    <a href="../index.html" class="btn-nav">Home</a>
+    <button class="btn-nav active">Dashboard</button>
+    <button class="btn-nav" onclick="signOutUser()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- DEMO MODE BANNER -->
+<div id="demo-banner">⚡ Running in Offline Demo Mode (LocalStorage Fallback) — data is stored locally.</div>
+
+<div class="container">
+  
+  <!-- PROFILE SIDEBAR -->
+  <aside class="profile-card">
+    <div class="avatar" id="user-avatar">?</div>
+    <h2 class="profile-name" id="user-name">Loading…</h2>
+    <p class="profile-email" id="user-email">email@example.com</p>
+    
+    <div class="profile-badges">
+      <span class="badge badge-role" id="user-role">Student</span>
+      <span class="badge badge-age" id="user-age">Age</span>
+    </div>
+
+    <div class="profile-details">
+      <div class="detail-item">City: <strong id="user-city">—</strong></div>
+      <div class="detail-item">Joined: <strong id="user-joined">—</strong></div>
+      <div class="detail-item">Quiz Best: <strong id="user-quiz">—</strong></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    
+    <!-- REPORTS CARD -->
+    <section class="card" id="reports-section">
+      <div class="card-header">
+        <h3 class="card-title">My Filed Reports & Evidence</h3>
+      </div>
+      <div id="reports-list">
+        <p style="color:var(--muted);text-align:center;padding:1.5rem">Loading reports…</p>
+      </div>
+    </section>
+
+    <!-- SAFETY PLAN CARD -->
+    <section class="card" id="safety-plan-section">
+      <div class="card-header">
+        <h3 class="card-title">My Safety Plan</h3>
+        <div id="plan-actions" style="display:none">
+          <button class="print-btn" onclick="window.print()"><span style="font-size:1rem">🖨</span> Print Plan</button>
+        </div>
+      </div>
+      <div id="safety-plan-content">
+        <p style="color:var(--muted);text-align:center;padding:1.5rem">Loading safety plan…</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- LOAD DRIVERS -->
+<script src="../js/config.js"></script>
+<script type="module">
+  import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+  let firebaseAuth = null;
+  let activeUser = null;
+  let userProfile = null;
+
+  async function initDashboard() {
+    // Check local mock session first
+    const mock = sessionStorage.getItem('unsilenced_mock_user');
+    if (mock) {
+      activeUser = JSON.parse(mock);
+      await loadProfileAndData(activeUser.uid);
+      showDemoBanner(true);
+    }
+
+    try {
+      const { getApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+      firebaseAuth = getAuth(getApp());
+      onAuthStateChanged(firebaseAuth, async (user) => {
+        if (user) {
+          activeUser = user;
+          sessionStorage.removeItem('unsilenced_mock_user');
+          await loadProfileAndData(user.uid);
+          showDemoBanner(window._db.isFallback);
+        } else {
+          // If no Firebase user but mock session exists, keep it
+          if (activeUser && activeUser.uid.startsWith('mock_')) return;
+          // Otherwise redirect to main site login
+          window.location.href = '../index.html';
+        }
+      });
+    } catch(e) {
+      console.warn('Firebase Auth offline in dashboard, running mock session only.');
+      if (!activeUser) {
+        window.location.href = '../index.html';
+      }
+    }
+  }
+
+  function showDemoBanner(show) {
+    const banner = document.getElementById('demo-banner');
+    if (banner) banner.style.display = show ? 'block' : 'none';
+  }
+
+  async function loadProfileAndData(uid) {
+    if (!window._db) return;
+    try {
+      userProfile = await window._db.read(`users/${uid}`);
+      if (!userProfile) {
+        // Fallback user details if database record not created yet
+        userProfile = {
+          name: activeUser.displayName || activeUser.email.split('@')[0],
+          email: activeUser.email,
+          role: 'student',
+          ageGroup: 'under18',
+          createdAt: Date.now()
+        };
+      }
+      renderUserProfile();
+      await renderReports(uid);
+      await renderSafetyPlan(uid);
+    } catch(e) {
+      console.error('Error loading user dashboard data:', e);
+    }
+  }
+
+  function renderUserProfile() {
+    const initials = (userProfile.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('user-avatar').textContent = initials;
+    document.getElementById('user-name').textContent = userProfile.name || 'Anonymous';
+    document.getElementById('user-email').textContent = userProfile.email;
+    
+    const roleEl = document.getElementById('user-role');
+    roleEl.textContent = userProfile.role || 'Student';
+    roleEl.className = 'badge badge-role';
+    
+    const ageEl = document.getElementById('user-age');
+    const ageMap = { under18: 'Under 18', '18-25': '18 to 25', '25+': '25 Plus' };
+    ageEl.textContent = ageMap[userProfile.ageGroup] || userProfile.ageGroup || '—';
+    ageEl.className = 'badge badge-age';
+
+    document.getElementById('user-city').textContent = userProfile.city || '—';
+    document.getElementById('user-joined').textContent = userProfile.createdAt 
+      ? new Date(userProfile.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : '—';
+    
+    document.getElementById('user-quiz').textContent = userProfile.quizBestScore != null
+      ? `${userProfile.quizBestScore} / 8`
+      : '—';
+  }
+
+  async function renderReports(uid) {
+    const listEl = document.getElementById('reports-list');
+    
+    // Read user's own reports index
+    const userReports = userProfile.reports || {};
+    const reportKeys = Object.keys(userReports);
+    
+    if (!reportKeys.length) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📂</div>
+          <div class="empty-title">No Filed Reports Yet</div>
+          <div class="empty-sub">Incident reports and evidence files you submit named will appear here.</div>
+          <a href="../index.html#report" class="empty-cta">Submit a Report</a>
+        </div>`;
+      return;
+    }
+
+    // Load full details for each report key
+    let html = '';
+    const statusMap = {
+      received: { label: 'Received', color: 'status-received' },
+      under_review: { label: 'Under Review', color: 'status-under_review' },
+      escalated: { label: 'Escalated', color: 'status-escalated' },
+      resolved: { label: 'Resolved', color: 'status-resolved' }
+    };
+
+    for (const key of reportKeys) {
+      const entry = userReports[key];
+      // Fetch fresh status from the actual collection
+      let details = null;
+      try {
+        details = await window._db.read(`${entry.path}/${key}`);
+      } catch(e) {}
+      
+      const item = details || entry;
+      const curStatus = statusMap[item.status] || statusMap['received'];
+      const dateStr = item.createdAt 
+        ? new Date(item.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+        : 'Recently';
+      
+      const typeLabel = entry.path === 'evidence' ? 'Evidence File' : entry.path === 'tips' ? 'Anonymous Tip' : 'Incident Report';
+      
+      html += `
+        <div class="report-item">
+          <div class="report-info">
+            <span class="report-ref">${item.referenceId || key.slice(0,8)}</span>
+            <div class="report-meta">${typeLabel} · Submitted on ${dateStr}</div>
+            ${item.description ? `<div style="font-size:0.8rem;color:var(--muted);margin-top:0.4rem">${item.description.slice(0, 100)}${item.description.length > 100 ? '…' : ''}</div>` : ''}
+          </div>
+          <span class="status-tag ${curStatus.color}">${curStatus.label}</span>
+        </div>`;
+    }
+
+    listEl.innerHTML = html;
+  }
+
+  async function renderSafetyPlan(uid) {
+    const planEl = document.getElementById('safety-plan-content');
+    const actionsEl = document.getElementById('plan-actions');
+    const plan = userProfile.safetyPlan;
+
+    if (!plan) {
+      actionsEl.style.display = 'none';
+      planEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🛡️</div>
+          <div class="empty-title">No Safety Plan Saved</div>
+          <div class="empty-sub">Create a step-by-step coping and protection plan to safeguard yourself.</div>
+          <a href="../index.html#safety-plan" class="empty-cta">Create Safety Plan</a>
+        </div>`;
+      return;
+    }
+
+    actionsEl.style.display = 'block';
+    
+    // Construct contacts display
+    let contactsHtml = '';
+    if (plan.trustedContacts) {
+      contactsHtml = '<div class="plan-contacts">';
+      Object.values(plan.trustedContacts).forEach(c => {
+        if (!c || !c.name) return;
+        contactsHtml += `
+          <div class="contact-bubble">
+            <div class="contact-bubble-name">👤 ${c.name}</div>
+            <div class="contact-bubble-phone">📞 ${c.phone || 'No phone'}</div>
+          </div>`;
+      });
+      contactsHtml += '</div>';
+    }
+
+    planEl.innerHTML = `
+      <div class="plan-sheet">
+        <div class="plan-field">
+          <div class="plan-label">Safety Plan For</div>
+          <div class="plan-value">${plan.name || userProfile.name}</div>
+        </div>
+        <div class="plan-field">
+          <div class="plan-label">My Situation / Triggers</div>
+          <div class="plan-value" style="font-weight:400;color:var(--muted)">${plan.trigger || '—'}</div>
+        </div>
+        <div class="plan-field">
+          <div class="plan-label">Target Platform</div>
+          <div class="plan-value"><span class="badge badge-role">${plan.platform || 'General'}</span></div>
+        </div>
+        <div class="plan-field">
+          <div class="plan-label">Evidence Documentation Plan</div>
+          <div class="plan-value" style="font-weight:400;color:var(--muted)">${plan.evidencePlan || '—'}</div>
+        </div>
+        <div class="plan-field">
+          <div class="plan-label">Coping & Avoidance Strategies</div>
+          <div class="plan-value" style="font-weight:400;color:var(--muted)">${plan.copingStrategies || '—'}</div>
+        </div>
+        <div class="plan-field" style="margin-bottom:0">
+          <div class="plan-label">My Trusted Contacts</div>
+          ${contactsHtml || '<div class="plan-value" style="font-weight:400;color:var(--muted)">No contacts added.</div>'}
+        </div>
+      </div>`;
+  }
+
+  window.signOutUser = async () => {
+    try {
+      sessionStorage.removeItem('unsilenced_mock_user');
+      sessionStorage.removeItem('mockAdminUser');
+      if (firebaseAuth) {
+        await signOut(firebaseAuth);
+      }
+    } catch(e) {}
+    window.location.href = '../index.html';
+  };
+
+  window.showToast = (msg, type) => {
+    type = type || 'info';
+    const wrap = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success:'✓', error:'✕', info:'ℹ' };
+    t.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 4200);
+  };
+
+  window.addEventListener('load', () => setTimeout(initDashboard, 300));
+</script>
+</body>
+</html>

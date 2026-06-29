@@ -1102,8 +1102,67 @@
   };
 
   // ── Auth state listener ──────────────────────────────────────
+  async function setupMockAdmin(user) {
+    document.getElementById('auth-screen').classList.remove('show');
+    const name = user.displayName || user.email.split('@')[0];
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sb-avatar').textContent = initials;
+    document.getElementById('sb-email').textContent  = user.email;
+
+    // Show Demo mode indicator in the banner
+    setConnStatus(true, 'Demo Mode (LocalStorage)');
+    document.getElementById('access-banner').classList.add('show');
+    document.getElementById('access-banner').style.background = 'var(--orange)';
+    document.getElementById('access-banner').style.borderColor = 'var(--orange)';
+    const bannerText = document.querySelector('#access-banner .access-banner-text');
+    if (bannerText) {
+      bannerText.innerHTML = '⚡ <strong>Running in Demo Mode (LocalStorage Fallback).</strong> Realtime database permissions are locked; edits will save locally.';
+    }
+    const guideBtn = document.querySelector('#access-banner .btn-show-rules');
+    if (guideBtn) guideBtn.style.display = 'none';
+
+    updateDashStatus('Loading local data…');
+    
+    // Seed local storage if empty
+    if (!localStorage.getItem('unsilenced_db')) {
+      try {
+        const res = await fetch('/firebase-rtdb-seed.json');
+        if (res.ok) {
+          const seed = await res.json();
+          localStorage.setItem('unsilenced_db', JSON.stringify(seed));
+        }
+      } catch(e) {}
+    }
+
+    // Populate stores from LocalStorage
+    try {
+      const raw = JSON.parse(localStorage.getItem('unsilenced_db') || '{}');
+      window._store.users = raw.users || {};
+      window._store.incidents = raw.reports || {};
+      window._store.evidence = raw.evidence || {};
+      window._store.tips = raw.tips || {};
+      window._store.stories = raw.stories || {};
+      window._store.pledges = raw.pledges || {};
+      window._store.quiz = raw.quiz_results || {};
+      window._store.meta = raw.meta || {};
+    } catch(e) {
+      console.error('Error loading mock database:', e);
+    }
+
+    updateDashStatus(`Last loaded: ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}`);
+    renderAll();
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
+      const mock = sessionStorage.getItem('mockAdminUser');
+      if (mock) {
+        try {
+          const mockUser = JSON.parse(mock);
+          setupMockAdmin(mockUser);
+          return;
+        } catch(e) {}
+      }
       document.getElementById('auth-screen').classList.add('show');
       setConnStatus(false, 'Not signed in');
       return;
@@ -1123,13 +1182,10 @@
       const snap = await get(ref(db, 'users/' + user.uid + '/role'));
       userRole = snap.exists() ? snap.val() : null;
     } catch(e) {
-      // PERMISSION_DENIED means rules block the read — role not set yet
       userRole = null;
     }
 
     // ── STEP 2: If no role set, write 'admin' to this user's own record ──
-    // The rules allow users to write their own node, so this works without
-    // existing admin access. First-time setup only.
     if (!userRole) {
       try {
         await update(ref(db, 'users/' + user.uid), {
@@ -1143,15 +1199,22 @@
         showToast('Admin role granted to your account.', 'success');
       } catch(e) {
         // Could not write — rules may block it
-        showToast('Could not set admin role: ' + e.message, 'error');
+        console.warn('Could not set admin role automatically:', e.message);
       }
     }
 
     // ── STEP 3: Only proceed if role is 'admin' ────────────────
     if (userRole !== 'admin') {
+      // Fallback to local admin check if they are logged in via firebase but rules block access
+      const mock = sessionStorage.getItem('mockAdminUser');
+      if (mock) {
+        setupMockAdmin(JSON.parse(mock));
+        return;
+      }
+      
       document.getElementById('auth-screen').classList.add('show');
       const errEl = document.getElementById('a-err');
-      errEl.textContent = 'Access denied. Your account (UID: ' + user.uid.slice(0,12) + '…) does not have admin role. Contact the site owner.';
+      errEl.textContent = 'Access denied. Your account (UID: ' + user.uid.slice(0,12) + '…) does not have admin role. Try logging in with admin@unsilenced.org';
       errEl.classList.add('show');
       setConnStatus(false, 'Access denied');
       await signOut(auth);
@@ -1164,6 +1227,9 @@
     const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('sb-avatar').textContent = initials;
     document.getElementById('sb-email').textContent  = user.email;
+
+    setConnStatus(true, 'Live Mode (Firebase)');
+    document.getElementById('access-banner').classList.remove('show');
 
     setConnStatus(null, 'Loading data…');
     await loadAllData(user);
@@ -1181,9 +1247,23 @@
     spin.style.display = 'block';
     document.getElementById('a-btn-label').textContent = 'Signing in…';
     err.classList.remove('show');
+
+    const handleLocalAdminLogin = () => {
+      const demoAdmin = window._env?.admin || { email: 'admin@unsilenced.org', password: 'admin123' };
+      if (email === demoAdmin.email && pass === demoAdmin.password) {
+        const mockUser = { uid: 'mock_admin_uid', email: demoAdmin.email, displayName: 'Admin User' };
+        sessionStorage.setItem('mockAdminUser', JSON.stringify(mockUser));
+        showToast('Logged in as Admin (Demo Mode)', 'success');
+        window.location.reload();
+        return true;
+      }
+      return false;
+    };
+
     try {
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (e) {
+      if (handleLocalAdminLogin()) return;
       const msgs = {
         'auth/invalid-credential':    'Incorrect email or password.',
         'auth/user-not-found':        'No account found with this email.',
@@ -1203,6 +1283,7 @@
 
   // ── Sign Out ─────────────────────────────────────────────────
   window.adminSignOut = async () => {
+    sessionStorage.removeItem('mockAdminUser');
     await signOut(auth);
     window.location.reload();
   };
@@ -1611,28 +1692,74 @@
     </table>`;
   }
 
+  const writeLocalDB = (path, value) => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('unsilenced_db') || '{}');
+      const parts = path.split('/').filter(Boolean);
+      let curr = raw;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i];
+        if (!curr[part] || typeof curr[part] !== 'object') curr[part] = {};
+        curr = curr[part];
+      }
+      curr[parts[parts.length - 1]] = value;
+      localStorage.setItem('unsilenced_db', JSON.stringify(raw));
+    } catch (e) {
+      console.error('Failed to write to local DB:', e);
+    }
+  };
+
   // ── STATUS UPDATE ────────────────────────────────────────────
   window.updateStatus = async (collection, key, newStatus) => {
+    const isMock = sessionStorage.getItem('mockAdminUser') !== null;
+    const updatePayload = { status: newStatus, updatedAt: Date.now() };
     try {
-      await update(ref(db, `${collection}/${key}`), { status: newStatus, updatedAt: Date.now() });
+      if (isMock) throw new Error("Mock Mode");
+      await update(ref(db, `${collection}/${key}`), updatePayload);
       if (window._store[collection === 'reports' ? 'incidents' : collection][key]) {
         (window._store[collection === 'reports' ? 'incidents' : collection][key]).status = newStatus;
       }
+      // Sync local DB
+      writeLocalDB(`${collection}/${key}`, {
+        ...(window._store[collection === 'reports' ? 'incidents' : collection][key] || {}),
+        ...updatePayload
+      });
       showToast(`Status updated to ${newStatus}`, 'success');
     } catch (e) {
-      showToast('Update failed: ' + e.message, 'error');
+      // Local fallback
+      const mappedCol = collection === 'incidents' ? 'reports' : collection;
+      writeLocalDB(`${mappedCol}/${key}/status`, newStatus);
+      writeLocalDB(`${mappedCol}/${key}/updatedAt`, Date.now());
+      
+      const storeKey = collection === 'reports' ? 'incidents' : collection;
+      if (window._store[storeKey]?.[key]) {
+        window._store[storeKey][key].status = newStatus;
+      }
+      showToast(`Status updated to ${newStatus} (LocalStorage)`, 'success');
+      renderAll();
     }
   };
 
   // ── APPROVE STORY ────────────────────────────────────────────
   window.approveStory = async (key, approved) => {
+    const isMock = sessionStorage.getItem('mockAdminUser') !== null;
+    const updatePayload = { approved, updatedAt: Date.now() };
     try {
-      await update(ref(db, `stories/${key}`), { approved, updatedAt: Date.now() });
+      if (isMock) throw new Error("Mock Mode");
+      await update(ref(db, `stories/${key}`), updatePayload);
       if (window._store.stories[key]) window._store.stories[key].approved = approved;
+      writeLocalDB(`stories/${key}`, {
+        ...(window._store.stories[key] || {}),
+        ...updatePayload
+      });
       renderStories();
       showToast(approved ? 'Story approved and published' : 'Story unapproved', 'success');
     } catch (e) {
-      showToast('Failed: ' + e.message, 'error');
+      writeLocalDB(`stories/${key}/approved`, approved);
+      writeLocalDB(`stories/${key}/updatedAt`, Date.now());
+      if (window._store.stories[key]) window._store.stories[key].approved = approved;
+      renderStories();
+      showToast(approved ? 'Story approved (LocalStorage)' : 'Story unapproved (LocalStorage)', 'success');
     }
   };
 

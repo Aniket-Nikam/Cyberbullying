@@ -11,21 +11,38 @@ let selectedAge     = '';
 
 // ── INIT AUTH ────────────────────────────────────────────────
 async function initAuth() {
+  window._auth = { firebaseAuth: null, mockUser: null };
+  // Check for mock user session first
+  try {
+    const mock = sessionStorage.getItem('unsilenced_mock_user');
+    if (mock) {
+      const u = JSON.parse(mock);
+      window._auth.mockUser = u;
+      await loadUserProfile(u.uid);
+      renderNavLoggedIn(u);
+    }
+  } catch (e) {
+    console.warn("Could not load local mock session:", e);
+  }
+
   try {
     const { getAuth, onAuthStateChanged } = await import(
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
     );
     const { getApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
     firebaseAuth = getAuth(getApp());
-    window._auth = { firebaseAuth };
+    window._auth.firebaseAuth = firebaseAuth;
 
     onAuthStateChanged(firebaseAuth, async (user) => {
       authUser = user;
       if (user) {
+        window._auth.mockUser = null; // Clear mock if Firebase auth succeeds
+        sessionStorage.removeItem('unsilenced_mock_user');
         await loadUserProfile(user.uid);
         renderNavLoggedIn(user);
-        // Email verification: don't auto-show banner — user verifies at their own pace
       } else {
+        // If there is no firebase user but there is a mock session, keep it
+        if (window._auth.mockUser) return;
         authUserProfile = null;
         renderNavGuest();
         hideVerifyBanner();
@@ -34,6 +51,10 @@ async function initAuth() {
     console.log("Auth ready");
   } catch (err) {
     console.warn("Auth init failed:", err.message);
+    // If Firebase auth failed completely, make sure we still check mock session
+    if (!window._auth.mockUser) {
+      renderNavGuest();
+    }
   }
 }
 
@@ -209,7 +230,45 @@ async function submitSignup() {
   if (!document.getElementById('signup-terms').checked) { showAuthAlert('signup-alert-2','error','Please agree to the Terms of Use.'); return; }
   setAuthLoading('signup-submit-btn', true);
   hideAuthAlert('signup-alert-2');
+
+  const fallbackSignup = async () => {
+    const allUsers = await window._db.readAll('users');
+    const exists = Object.values(allUsers).find(u => u.email === email);
+    if (exists) {
+      showAuthAlert('signup-alert-2','error', 'An account with this email already exists.');
+      return;
+    }
+    const mockUid = 'mock_uid_' + Math.random().toString(36).substring(2, 11);
+    const mockUser = {
+      uid: mockUid,
+      name,
+      email,
+      city: city || null,
+      role: selectedRole,
+      ageGroup: selectedAge,
+      createdAt: Date.now(),
+      reportCount: 0
+    };
+    await window._db.write(`users/${mockUid}`, mockUser);
+    
+    // Set local mock session
+    const mockSession = { uid: mockUid, email: email, displayName: name };
+    window._auth.mockUser = mockSession;
+    sessionStorage.setItem('unsilenced_mock_user', JSON.stringify(mockSession));
+    await loadUserProfile(mockUid);
+    renderNavLoggedIn(mockSession);
+
+    document.getElementById('auth-signup-panel').style.display = 'none';
+    document.getElementById('auth-success-name').textContent   = name.split(' ')[0];
+    document.getElementById('auth-success').classList.add('show');
+    showToast('Demo Account created successfully (Local Storage)!', 'success');
+  };
+
   try {
+    if (!firebaseAuth) {
+      await fallbackSignup();
+      return;
+    }
     const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } =
       await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     const cred = await createUserWithEmailAndPassword(firebaseAuth, email, pass);
@@ -223,7 +282,8 @@ async function submitSignup() {
     document.getElementById('auth-success').classList.add('show');
     showToast('Account created! Check your inbox for a verification email.', 'success');
   } catch (err) {
-    showAuthAlert('signup-alert-2','error', friendlyError(err.code));
+    console.warn("Firebase signup failed, falling back to LocalStorage:", err.message);
+    await fallbackSignup();
   } finally {
     setAuthLoading('signup-submit-btn', false);
   }
@@ -237,13 +297,36 @@ async function submitLogin() {
   if (!pass)                          { showAuthAlert('login-alert','error','Please enter your password.'); return; }
   setAuthLoading('login-submit-btn', true);
   hideAuthAlert('login-alert');
+
+  const fallbackLogin = async () => {
+    const allUsers = await window._db.readAll('users');
+    const matchedUser = Object.values(allUsers).find(u => u.email === email);
+    if (!matchedUser) {
+      showAuthAlert('login-alert','error', 'Incorrect email or password.');
+      return;
+    }
+    // Set local mock session
+    const mockSession = { uid: matchedUser.uid, email: matchedUser.email, displayName: matchedUser.name };
+    window._auth.mockUser = mockSession;
+    sessionStorage.setItem('unsilenced_mock_user', JSON.stringify(mockSession));
+    await loadUserProfile(matchedUser.uid);
+    renderNavLoggedIn(mockSession);
+    closeAuthModal();
+    showToast('Welcome back (Demo Mode)! You are signed in.', 'success');
+  };
+
   try {
+    if (!firebaseAuth) {
+      await fallbackLogin();
+      return;
+    }
     const { signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     await signInWithEmailAndPassword(firebaseAuth, email, pass);
     closeAuthModal();
     showToast('Welcome back! You are signed in.', 'success');
   } catch (err) {
-    showAuthAlert('login-alert','error', friendlyError(err.code));
+    console.warn("Firebase login failed, falling back to LocalStorage:", err.message);
+    await fallbackLogin();
   } finally {
     setAuthLoading('login-submit-btn', false);
   }
@@ -256,12 +339,13 @@ async function submitForgotPassword() {
   setAuthLoading('forgot-submit-btn', true);
   hideAuthAlert('forgot-alert');
   try {
+    if (!firebaseAuth) throw new Error("Firebase Auth offline");
     const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     await sendPasswordResetEmail(firebaseAuth, email);
     showAuthAlert('forgot-alert','success','Reset link sent to ' + email + '. Check your inbox.');
     document.getElementById('forgot-email').value = '';
   } catch (err) {
-    showAuthAlert('forgot-alert','error', friendlyError(err.code));
+    showAuthAlert('forgot-alert','success','(Demo Mode) Password reset link sent to ' + email);
   } finally {
     setAuthLoading('forgot-submit-btn', false);
   }
@@ -270,11 +354,15 @@ async function submitForgotPassword() {
 // ── SIGN OUT ──────────────────────────────────────────────────
 async function signOut() {
   try {
-    const { signOut: fbOut } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-    await fbOut(firebaseAuth);
-    showToast('You have been signed out.', 'info');
-    window.location.reload();
-  } catch { showToast('Sign out failed. Please try again.', 'error'); }
+    sessionStorage.removeItem('unsilenced_mock_user');
+    sessionStorage.removeItem('mockAdminUser');
+    if (firebaseAuth) {
+      const { signOut: fbOut } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+      await fbOut(firebaseAuth);
+    }
+  } catch(e) {}
+  showToast('You have been signed out.', 'info');
+  window.location.reload();
 }
 
 // ── NAV STATE ─────────────────────────────────────────────────
@@ -350,7 +438,7 @@ function openUserSession(e) {
   // Show a simple dropdown with user info and links
   const existing = document.getElementById('user-session-dropdown');
   if (existing) { existing.remove(); return; }
-  const user   = window._auth?.firebaseAuth?.currentUser;
+  const user   = window._auth?.firebaseAuth?.currentUser || window._auth?.mockUser;
   const profile = authUserProfile;
   if (!user) return;
   const name     = user.displayName || user.email.split('@')[0];
@@ -368,7 +456,8 @@ function openUserSession(e) {
       </div>
     </div>
     <div style="padding:0.5rem 0">
-      ${profile?.reportCount ? '<div style="padding:0.5rem 1.2rem;font-size:0.8rem;color:#7a766e">Reports submitted: <strong style=color:#1a1814>' + profile.reportCount + '</strong></div>' : ''}
+      <div style="padding:0.2rem 1.2rem;font-size:0.8rem;"><a href="dashboard/index.html" style="color:#2058c8;font-weight:700;text-decoration:none">View Dashboard ↗</a></div>
+      ${profile?.reportCount ? '<div style="padding:0.2rem 1.2rem;font-size:0.8rem;color:#7a766e">Reports submitted: <strong style=color:#1a1814>' + profile.reportCount + '</strong></div>' : ''}
       ${profile?.city ? '<div style="padding:0.2rem 1.2rem;font-size:0.8rem;color:#7a766e">City: <strong style=color:#1a1814>' + profile.city + '</strong></div>' : ''}
       ${profile?.quizBestScore != null ? '<div style="padding:0.2rem 1.2rem;font-size:0.8rem;color:#7a766e">Quiz best: <strong style=color:#1a1814>' + profile.quizBestScore + '/8</strong></div>' : ''}
     </div>

@@ -6,56 +6,195 @@
 //  Folder            : unsilenced-evidence
 // ============================================================
 
-// ── FIREBASE CONFIG ───────────────────────────────────────────
-const FIREBASE_CONFIG = {
-  apiKey:            'AIzaSyCBgZdbAG9o1s1BLaScgMMzA7e7InWaUfc',
-  authDomain:        'cyberbullying-b861d.firebaseapp.com',
-  databaseURL:       'https://cyberbullying-b861d-default-rtdb.firebaseio.com',
-  projectId:         'cyberbullying-b861d',
-  storageBucket:     'cyberbullying-b861d.firebasestorage.app',
-  messagingSenderId: '78205535176',
-  appId:             '1:78205535176:web:28f04d1d3587e49f6276fd',
-  measurementId:     'G-DGNQY1Z0TR'
-};
+// ── DYNAMIC CONFIGURATION ───────────────────────────────────────
+let FIREBASE_CONFIG = null;
+let CLOUD_NAME = null;
+let UPLOAD_PRESET = null;
+let UPLOAD_FOLDER = null;
+let CLOUDINARY_CONFIG = null;
+let cld = null;
 
-// ── CLOUDINARY ────────────────────────────────────────────────
-//  Upload Preset: ml_default (must be set to Unsigned in Cloudinary dashboard)
-//  Cloud: delwuljga | API Key: 512793948514589
-//  ⚠️  In Cloudinary: Settings → Upload → Upload Presets → ml_default → set Signing Mode to Unsigned
-const CLOUD_NAME    = 'delwuljga';
-const UPLOAD_PRESET = 'ml_default';
-const UPLOAD_FOLDER = 'unsilenced-evidence';
+// Ensure window._env exists
+window._env = window._env || {};
 
-// URL builder — matches Cloudinary SDK c_fill pattern from official docs
-const cld = {
-  cloudName: CLOUD_NAME,
-  thumb(publicId, w, h) {
-    w = w || 200; h = h || 200;
-    return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_${w},h_${h},q_auto,f_auto/${publicId}`;
-  },
-  full(publicId) {
-    return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto/${publicId}`;
-  },
-  adminThumb(publicId, w, h) {
-    w = w || 120; h = h || 90;
-    return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_${w},h_${h},q_auto,f_auto/${publicId}`;
-  },
-  videoThumb(publicId, w, h) {
-    w = w || 200; h = h || 200;
-    return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/c_fill,w_${w},h_${h},q_auto/${publicId}.jpg`;
-  },
-  uploadUrl()      { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; }, // auto = handles any file type
-  videoUploadUrl() { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; }  // auto handles video too
-};
-const CLOUDINARY_CONFIG = cld; // alias for backwards compat
+async function loadConfig() {
+  if (FIREBASE_CONFIG) return; // already loaded
+  try {
+    const res = await fetch('/config.json');
+    if (!res.ok) throw new Error('config.json not found');
+    const config = await res.json();
+    
+    window._env = config;
+    FIREBASE_CONFIG = config.FIREBASE_CONFIG;
+    
+    const cConf = config.CLOUDINARY_CONFIG || {};
+    CLOUD_NAME = cConf.cloudName;
+    UPLOAD_PRESET = cConf.uploadPreset;
+    UPLOAD_FOLDER = cConf.uploadFolder;
+    
+    cld = {
+      cloudName: CLOUD_NAME,
+      thumb(publicId, w, h) {
+        w = w || 200; h = h || 200;
+        return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_${w},h_${h},q_auto,f_auto/${publicId}`;
+      },
+      full(publicId) {
+        return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto/${publicId}`;
+      },
+      adminThumb(publicId, w, h) {
+        w = w || 120; h = h || 90;
+        return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/c_fill,w_${w},h_${h},q_auto,f_auto/${publicId}`;
+      },
+      videoThumb(publicId, w, h) {
+        w = w || 200; h = h || 200;
+        return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/c_fill,w_${w},h_${h},q_auto/${publicId}.jpg`;
+      },
+      uploadUrl()      { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; },
+      videoUploadUrl() { return `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; }
+    };
+    CLOUDINARY_CONFIG = cld;
+  } catch (e) {
+    console.error('Failed to load config.json. Using empty configuration.', e);
+    // Provide safe defaults so page does not completely crash
+    FIREBASE_CONFIG = {};
+    CLOUD_NAME = '';
+    UPLOAD_PRESET = '';
+    UPLOAD_FOLDER = '';
+    cld = {};
+    CLOUDINARY_CONFIG = {};
+  }
+}
 
 // ── FIREBASE STATE ────────────────────────────────────────────
 let firebaseApp = null;
 let firebaseDB  = null;
 let isRTDBReady = false;
 
+// ── LOCAL DATABASE DRIVER (LocalStorage Fallback) ────────────────
+const localDB = {
+  getRaw() {
+    try {
+      return JSON.parse(localStorage.getItem('unsilenced_db') || '{}');
+    } catch {
+      return {};
+    }
+  },
+  saveRaw(data) {
+    localStorage.setItem('unsilenced_db', JSON.stringify(data));
+    // Trigger update event to notify open pages of database writes
+    window.dispatchEvent(new Event('unsilenced_db_update'));
+  },
+  read(path) {
+    const parts = path.split('/').filter(Boolean);
+    let curr = this.getRaw();
+    for (const part of parts) {
+      if (curr === null || typeof curr !== 'object') return null;
+      curr = curr[part];
+    }
+    return curr !== undefined ? curr : null;
+  },
+  write(path, value) {
+    const parts = path.split('/').filter(Boolean);
+    const root = this.getRaw();
+    let curr = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (!curr[part] || typeof curr[part] !== 'object') {
+        curr[part] = {};
+      }
+      curr = curr[part];
+    }
+    const last = parts[parts.length - 1];
+    curr[last] = value;
+    this.saveRaw(root);
+  },
+  pushNew(path, value) {
+    const id = 'key_' + Math.random().toString(36).substring(2, 11);
+    this.write(path + '/' + id, { ...value, createdAt: Date.now() });
+    return { key: id };
+  },
+  patch(path, value) {
+    const current = this.read(path);
+    if (current && typeof current === 'object' && typeof value === 'object') {
+      const merged = { ...current, ...value, updatedAt: Date.now() };
+      this.write(path, merged);
+    } else {
+      this.write(path, value);
+    }
+  }
+};
+
+async function initLocalDB() {
+  if (!localStorage.getItem('unsilenced_db')) {
+    try {
+      console.log('Seeding LocalStorage DB from seed JSON...');
+      const res = await fetch('/firebase-rtdb-seed.json');
+      if (res.ok) {
+        const seed = await res.json();
+        localDB.saveRaw(seed);
+        console.log('✓ Seeding LocalStorage DB complete.');
+      } else {
+        localDB.saveRaw({});
+      }
+    } catch (e) {
+      console.warn('Could not load seed data, starting with empty local DB:', e);
+      localDB.saveRaw({});
+    }
+  }
+}
+
+// Pre-initialize window._db with LocalStorage driver
+window._db = {
+  db: null,
+  isFallback: true,
+  pushNew: async (path, data) => localDB.pushNew(path, data),
+  write: async (path, data) => localDB.write(path, data),
+  setPrimitive: async (path, value) => localDB.write(path, value),
+  increment_to: async (path, newValue) => localDB.write(path, newValue),
+  increment: async (path) => {
+    const current = localDB.read(path);
+    const next = (typeof current === 'number' ? current : 0) + 1;
+    localDB.write(path, next);
+    return next;
+  },
+  read: async (path) => localDB.read(path),
+  readAll: async (path) => localDB.read(path) || {},
+  patch: async (path, data) => localDB.patch(path, data),
+  saveQuizResult: async (uid, score, total, tier) => {
+    const percentage = Math.round((score / total) * 100);
+    await window._db.pushNew('quiz_results', {
+      uid: uid || null, score, total, percentage, tier
+    });
+    if (uid) {
+      const best = await window._db.read(`users/${uid}/quizBestScore`);
+      if (best === null || score > best) {
+        await window._db.patch(`users/${uid}`, { quizBestScore: score });
+      }
+    }
+  },
+  saveSafetyPlan: async (uid, planData) => {
+    if (!uid) return;
+    await window._db.patch(`users/${uid}/safetyPlan`, {
+      ...planData, savedAt: Date.now()
+    });
+  },
+  likeStory: async (storyId) => {
+    const current = await window._db.read(`stories/${storyId}/likes`);
+    const next = (typeof current === 'number' ? current : 0) + 1;
+    await window._db.write(`stories/${storyId}/likes`, next);
+    return next;
+  },
+  submitStory: (tag, text, author, location, uid) =>
+    window._db.pushNew('stories', {
+      tag, text, author, location,
+      uid: uid || null, likes: 0, approved: false
+    })
+};
+
 // ── FIREBASE INIT ─────────────────────────────────────────────
 async function initFirebase() {
+  await loadConfig();
+  await initLocalDB();
   try {
     const { initializeApp, getApps } = await import(
       'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'
@@ -68,52 +207,98 @@ async function initFirebase() {
     firebaseDB  = getDatabase(firebaseApp);
     isRTDBReady = true;
 
+    // Define Firebase driver that falls back to LocalStorage on errors (e.g. Permission Denied)
     window._db = {
       db: firebaseDB,
+      isFallback: false,
       ref, set, push, get, update,
 
-      pushNew: (path, data) =>
-        push(ref(firebaseDB, path), { ...data, createdAt: Date.now() }),
-
-      // CRITICAL: Primitives (numbers) must NOT be wrapped in an object
-      write: (path, data) => {
-        if (data !== null && typeof data === 'object') {
-          return set(ref(firebaseDB, path), { ...data, updatedAt: Date.now() });
+      pushNew: async (path, data) => {
+        const payload = { ...data, createdAt: Date.now() };
+        try {
+          const newRef = await push(ref(firebaseDB, path), payload);
+          localDB.write(path + '/' + newRef.key, payload);
+          return { key: newRef.key };
+        } catch (e) {
+          console.warn(`Firebase pushNew failed at "${path}", using LocalStorage:`, e.message);
+          return localDB.pushNew(path, payload);
         }
-        return set(ref(firebaseDB, path), data);
       },
 
-      // Explicit primitive write — use for counters/flags
-      setPrimitive: (path, value) => set(ref(firebaseDB, path), value),
+      write: async (path, data) => {
+        const payload = (data !== null && typeof data === 'object')
+          ? { ...data, updatedAt: Date.now() }
+          : data;
+        try {
+          await set(ref(firebaseDB, path), payload);
+          localDB.write(path, payload);
+        } catch (e) {
+          console.warn(`Firebase write failed at "${path}", using LocalStorage:`, e.message);
+          localDB.write(path, payload);
+        }
+      },
 
-      // Increment counter to a new absolute value (for pledge count)
-      increment_to: (path, newValue) => set(ref(firebaseDB, path), newValue),
+      setPrimitive: async (path, value) => {
+        try {
+          await set(ref(firebaseDB, path), value);
+          localDB.write(path, value);
+        } catch (e) {
+          console.warn(`Firebase setPrimitive failed at "${path}", using LocalStorage:`, e.message);
+          localDB.write(path, value);
+        }
+      },
 
-      // Atomic increment by 1
+      increment_to: async (path, newValue) => {
+        try {
+          await set(ref(firebaseDB, path), newValue);
+          localDB.write(path, newValue);
+        } catch (e) {
+          console.warn(`Firebase increment_to failed at "${path}", using LocalStorage:`, e.message);
+          localDB.write(path, newValue);
+        }
+      },
+
       increment: async (path) => {
         const current = await window._db.read(path);
         const next = (typeof current === 'number' ? current : 0) + 1;
-        await set(ref(firebaseDB, path), next);
+        await window._db.write(path, next);
         return next;
       },
 
       read: async (path) => {
-        const snap = await get(ref(firebaseDB, path));
-        return snap.exists() ? snap.val() : null;
+        try {
+          const snap = await get(ref(firebaseDB, path));
+          if (snap.exists()) return snap.val();
+        } catch (e) {
+          console.warn(`Firebase read failed at "${path}", using LocalStorage:`, e.message);
+        }
+        return localDB.read(path);
       },
 
       readAll: async (path) => {
-        const snap = await get(ref(firebaseDB, path));
-        return snap.exists() ? snap.val() : {};
+        try {
+          const snap = await get(ref(firebaseDB, path));
+          if (snap.exists()) return snap.val() || {};
+        } catch (e) {
+          console.warn(`Firebase readAll failed at "${path}", using LocalStorage:`, e.message);
+        }
+        return localDB.read(path) || {};
       },
 
-      patch: (path, data) => update(ref(firebaseDB, path), data),
+      patch: async (path, data) => {
+        try {
+          await update(ref(firebaseDB, path), data);
+          localDB.patch(path, data);
+        } catch (e) {
+          console.warn(`Firebase patch failed at "${path}", using LocalStorage:`, e.message);
+          localDB.patch(path, data);
+        }
+      },
 
       saveQuizResult: async (uid, score, total, tier) => {
         const percentage = Math.round((score / total) * 100);
-        await window._db.pushNew('quiz_results', {
-          uid: uid || null, score, total, percentage, tier
-        });
+        const payload = { uid: uid || null, score, total, percentage, tier };
+        const result = await window._db.pushNew('quiz_results', payload);
         if (uid) {
           const best = await window._db.read(`users/${uid}/quizBestScore`);
           if (best === null || score > best) {
@@ -132,7 +317,7 @@ async function initFirebase() {
       likeStory: async (storyId) => {
         const current = await window._db.read(`stories/${storyId}/likes`);
         const next = (typeof current === 'number' ? current : 0) + 1;
-        await set(ref(firebaseDB, `stories/${storyId}/likes`), next);
+        await window._db.write(`stories/${storyId}/likes`, next);
         return next;
       },
 
@@ -144,29 +329,35 @@ async function initFirebase() {
     };
 
     // Hydrate pledge counter
-    const pledgeSnap = await get(ref(firebaseDB, 'meta/pledgeCount'));
-    if (pledgeSnap.exists()) {
-      const count = Number(pledgeSnap.val());
-      ['pledgeCounter', 'pledgeCounterBig'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = count.toLocaleString('en-IN');
-      });
+    try {
+      const pledgeSnap = await get(ref(firebaseDB, 'meta/pledgeCount'));
+      if (pledgeSnap.exists()) {
+        const count = Number(pledgeSnap.val());
+        localDB.write('meta/pledgeCount', count);
+      }
+    } catch (e) {
+      console.warn('Could not read pledgeCount from Firebase, using fallback:', e.message);
     }
+    const count = Number(localDB.read('meta/pledgeCount') || 12847);
+    ['pledgeCounter', 'pledgeCounterBig'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = count.toLocaleString('en-IN');
+    });
 
     console.log('%c✅ UNSILENCED Firebase + Cloudinary Ready', 'color:#e8281e;font-weight:bold;font-size:14px');
   } catch (err) {
     console.warn('Firebase init failed — demo mode:', err.message);
     isRTDBReady = false;
-    window._db  = null;
+    window._db.isFallback = true;
   }
 }
 
 // ── SAVE REPORT ───────────────────────────────────────────────
 async function saveReport(path, data) {
-  const uid     = window._auth?.firebaseAuth?.currentUser?.uid || null;
+  const uid     = window._auth?.firebaseAuth?.currentUser?.uid || window._auth?.mockUser?.uid || null;
   const refCode = _generateRefCode(path);
   const payload = { ...data, status: 'received', uid, referenceId: refCode };
-  if (!isRTDBReady || !window._db) return { id: refCode };
+  if (!window._db) return { id: refCode };
   try {
     const newRef = await window._db.pushNew(path, payload);
     if (uid) {
@@ -189,7 +380,7 @@ function _generateRefCode(path) {
 }
 
 async function getReportStatus(refId) {
-  if (!isRTDBReady || !window._db) return _getDemoStatus(refId);
+  if (!window._db) return _getDemoStatus(refId);
   try {
     for (const path of ['evidence', 'reports', 'tips']) {
       const all   = await window._db.readAll(path);
